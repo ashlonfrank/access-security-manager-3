@@ -4,7 +4,7 @@ React and TypeScript implementation of the [Manage User Figma frame](https://www
 
 ## Proposal 3 preview
 
-On the `proposal-3` branch the dev server opens the three-column Access and Security Manager (person, company, then that company’s accounts and entitlements). Use a port other than 4321 if another proposal is already running there.
+On the `proposal-3` branch the dev server opens the Access and Security Manager split view. **Manage your** sits above the panels, with Users and Companies as tabs. Users opens a person’s companies, then that company’s accounts and entitlements. Companies opens that company’s accounts. Use a port other than 4321 if another proposal is already running there.
 
 ```sh
 npm run dev -- --host 127.0.0.1 --port 4473 --strictPort

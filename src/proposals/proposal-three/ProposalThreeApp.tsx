@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import assets from "../../assets.json";
 import initialUsers from "../../users.json";
 import legacyRoles from "../../legacy-user-roles.json";
@@ -16,6 +16,7 @@ import {
   statusClass,
 } from "../../business";
 import {
+  accountsForCompany,
   formatAccountLabel,
   seedAccountAccess,
   visibleAccountsForUser,
@@ -263,6 +264,27 @@ export default function ProposalThreeApp() {
       : [];
   const account = visibleAccounts.find((row) => row.id === accountId) ?? visibleAccounts[0];
 
+  function activateTab(next: "users" | "companies") {
+    setTab(next);
+    setSelectedCompany(null);
+    setSelectedUserId(null);
+    setAccountId("");
+    setEditingUser(false);
+    setEditingRights(false);
+    setManageOpen(false);
+    setError("");
+  }
+
+  function onManageTabKey(event: KeyboardEvent<HTMLButtonElement>) {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft" && event.key !== "Home" && event.key !== "End") return;
+    event.preventDefault();
+    const next =
+      event.key === "Home" ? "users" : event.key === "End" ? "companies" : tab === "users" ? "companies" : "users";
+    activateTab(next);
+    const id = next === "users" ? "p3-users-tab" : "p3-companies-tab";
+    requestAnimationFrame(() => document.getElementById(id)?.focus());
+  }
+
   function selectUser(user: User) {
     setSelectedUserId(user.id);
     setManageOpen(false);
@@ -394,8 +416,9 @@ export default function ProposalThreeApp() {
     return seedAccountAccess(selectedUser.id, selectedUser.role, rights, selectedCompany)[row.id] ?? false;
   }
 
-  const showUserPanel = tab === "users" ? Boolean(selectedUser) : selectedCompany !== null;
-  const showRightsPanel = Boolean(selectedUser && selectedCompany !== null);
+  const showRightsPanel = tab === "users" && Boolean(selectedUser && selectedCompany !== null && rights);
+  const companyAccounts = selectedCompany !== null ? accountsForCompany(selectedCompany) : [];
+  const openCompanyAccountId = accountId || companyAccounts[0]?.id || "";
   const authType = rights ? (rights.mfa ? (rights.token === "Hard token" ? "Hard token" : "Soft token") : "No token") : "No token";
 
   return (
@@ -415,7 +438,7 @@ export default function ProposalThreeApp() {
             <button className="icon-button" type="button" aria-label="Search users" onClick={() => searchRef.current?.focus()}>
               <Icon src={assets.imgFill1} inverse />
             </button>
-            <button className="icon-button" type="button" aria-label="Help" onClick={() => setDialog({ kind: "info", title: "Access & Security Manager help", content: "Choose a person, then a company, then review the accounts and entitlements for that company. Status stays a tag. Turning off multi-factor authentication means no token." })}>
+            <button className="icon-button" type="button" aria-label="Help" onClick={() => setDialog({ kind: "info", title: "Access & Security Manager help", content: "Manage your users opens a person, then their companies, then that company’s accounts and entitlements. Manage your companies opens a company’s accounts. Status stays a tag. Turning off multi-factor authentication means no token." })}>
               <Icon src={assets.imgFill2} inverse />
             </button>
             <button className="icon-button messages" type="button" aria-label="Messages, 5 unread" onClick={() => setDialog({ kind: "info", title: "Messages", content: "Messages are not connected in this local preview." })}>
@@ -452,7 +475,7 @@ export default function ProposalThreeApp() {
       </header>
       <main id="proposal-three-main" className="p3-main">
         <div className="p3-titlebar">
-          <h1>Access and Security Manager</h1>
+          <p className="p3-page-title">Access and Security Manager</p>
           <div className="p3-subnav" aria-label="Access and security sections">
             <button type="button" className="p3-chip" aria-current="page">All users</button>
             {["Account activity", "Chase Dual Control", "IP Security", "Demos and user guides"].map((label) => (
@@ -473,16 +496,42 @@ export default function ProposalThreeApp() {
           </label>
         </div>
         {notice && <p className="p3-notice">{notice}</p>}
+        <div className="p3-manage">
+          <h1>Manage your</h1>
+          <div className="p3-tabs" role="tablist" aria-label="Manage your">
+            <button
+              type="button"
+              role="tab"
+              id="p3-users-tab"
+              aria-selected={tab === "users"}
+              aria-controls="p3-list-panel"
+              tabIndex={tab === "users" ? 0 : -1}
+              onClick={() => activateTab("users")}
+              onKeyDown={onManageTabKey}
+            >
+              Users
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="p3-companies-tab"
+              aria-selected={tab === "companies"}
+              aria-controls="p3-list-panel"
+              tabIndex={tab === "companies" ? 0 : -1}
+              onClick={() => activateTab("companies")}
+              onKeyDown={onManageTabKey}
+            >
+              Companies
+            </button>
+          </div>
+        </div>
         <div className="p3-stage">
-          <section className="p3-panel" aria-label={tab === "users" ? "Users" : "Companies"}>
-            <div className="p3-tabs" role="tablist" aria-label="View by">
-              <button type="button" role="tab" aria-selected={tab === "users"} onClick={() => { setTab("users"); setSelectedCompany(null); setSelectedUserId(null); }}>
-                Users
-              </button>
-              <button type="button" role="tab" aria-selected={tab === "companies"} onClick={() => { setTab("companies"); setSelectedCompany(null); setSelectedUserId(null); }}>
-                Companies
-              </button>
-            </div>
+          <section
+            className="p3-panel"
+            id="p3-list-panel"
+            role="tabpanel"
+            aria-labelledby={tab === "users" ? "p3-users-tab" : "p3-companies-tab"}
+          >
             <div className="p3-scroll">
               {tab === "users" ? (
                 <>
@@ -520,7 +569,7 @@ export default function ProposalThreeApp() {
             </div>
           </section>
 
-          {showUserPanel && tab === "users" && selectedUser && (
+          {tab === "users" && selectedUser && (
             <section className="p3-panel p3-panel-person p3-panel-enter" aria-label={`${selectedUser.name} companies`}>
               <div className="p3-block">
                 <div className="p3-profile-top">
@@ -654,30 +703,6 @@ export default function ProposalThreeApp() {
             </section>
           )}
 
-          {showUserPanel && tab === "companies" && selectedCompany !== null && (
-            <section className="p3-panel p3-panel-enter" aria-label={`${coffeeCompanies[selectedCompany].location} users`}>
-              <div className="p3-block">
-                <h2 className="p3-profile-name">{coffeeCompanies[selectedCompany].location}</h2>
-                <p className="p3-meta">{coffeeCompanies[selectedCompany].name}</p>
-              </div>
-              <div className="p3-scroll">
-                {users
-                  .filter((user) => user.status !== "Removed" && companyIndex(user.id) === selectedCompany)
-                  .sort((a, b) => a.name.localeCompare(b.name))
-                  .map((user) => (
-                    <button type="button" className="p3-person" key={user.id} aria-checked={user.id === selectedUserId} onClick={() => selectUser(user)}>
-                      <Avatar user={user} />
-                      <span className="p3-person-copy">
-                        <span className="p3-person-name">{user.name}</span>
-                        <span className="p3-meta">{user.role}</span>
-                      </span>
-                      <span className="p3-radio" />
-                    </button>
-                  ))}
-              </div>
-            </section>
-          )}
-
           {showRightsPanel && selectedUser && selectedCompany !== null && rights && (
             <section className="p3-panel p3-panel-rights p3-panel-enter" aria-label={`${coffeeCompanies[selectedCompany].location} accounts`}>
               <div className="p3-block">
@@ -773,6 +798,42 @@ export default function ProposalThreeApp() {
                   <button className="p3-fill p3-fill-auto" type="button" onClick={saveRights}>Save</button>
                 </div>
               )}
+            </section>
+          )}
+
+          {tab === "companies" && selectedCompany !== null && (
+            <section className="p3-panel p3-panel-rights p3-panel-enter" aria-label={`${coffeeCompanies[selectedCompany].location} accounts`}>
+              <div className="p3-block">
+                <h2 className="p3-profile-name">{coffeeCompanies[selectedCompany].location}</h2>
+                <p className="p3-meta">{coffeeCompanies[selectedCompany].name}</p>
+                <p className="p3-kicker">Open accounts</p>
+                <p className="p3-meta">See, upload, and download account opening documents</p>
+              </div>
+              <div className="p3-scroll">
+                {companyAccounts.map((row) => {
+                  const open = row.id === openCompanyAccountId;
+                  return (
+                    <div className="p3-account" key={row.id}>
+                      <button type="button" className="p3-account-toggle" aria-expanded={open} onClick={() => setAccountId(row.id)}>
+                        <Chevron direction={open ? "down" : "right"} />
+                        <span>{formatAccountLabel(row, `company-${selectedCompany}`)}</span>
+                      </button>
+                      {open && (
+                        <div className="p3-account-body">
+                          {sectionsFor(row.product).map((section) => (
+                            <div className="p3-section" key={section.title}>
+                              <h3>{section.title}</h3>
+                              {section.names.map((name) => (
+                                <p className="p3-catalog" key={name}>{name}</p>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </section>
           )}
         </div>
