@@ -20,12 +20,14 @@ function resolvePrototype(): string | null {
 }
 
 const prototype = resolvePrototype();
+// This branch is the proposal-3 preview. The split view is the default so a
+// bare server URL still opens it when another agent already owns port 4321.
 const Root =
   prototype === "proposal-one"
     ? ProposalOneApp
-    : prototype === "proposal-three"
-      ? ProposalThreeApp
-      : App;
+    : prototype === "baseline" || prototype === "app"
+      ? App
+      : ProposalThreeApp;
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

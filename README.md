@@ -2,6 +2,16 @@
 
 React and TypeScript implementation of the [Manage User Figma frame](https://www.figma.com/design/ez8f0DFwJwbAVxi52I0H8J/Access-Management-Folio-Projects?node-id=1-69026&m=dev).
 
+## Proposal 3 preview
+
+On the `proposal-3` branch the dev server opens the three-column Access and Security Manager (person, company, then that company’s accounts and entitlements). Use a port other than 4321 if another proposal is already running there.
+
+```sh
+npm run dev -- --host 127.0.0.1 --port 4473 --strictPort
+```
+
+Open http://127.0.0.1:4473/. `?prototype=baseline` shows the original user table.
+
 ## Run locally
 
 ```sh
