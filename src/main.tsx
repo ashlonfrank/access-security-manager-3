@@ -4,6 +4,7 @@ import "@fontsource/open-sans/400.css";
 import "@fontsource/open-sans/600.css";
 import App from "./App";
 import ProposalOneApp from "./proposals/proposal-one/ProposalOneApp";
+import ProposalThreeApp from "./proposals/proposal-three/ProposalThreeApp";
 import "./styles.css";
 import "./refinements.css";
 
@@ -19,7 +20,12 @@ function resolvePrototype(): string | null {
 }
 
 const prototype = resolvePrototype();
-const Root = prototype === "proposal-one" ? ProposalOneApp : App;
+const Root =
+  prototype === "proposal-one"
+    ? ProposalOneApp
+    : prototype === "proposal-three"
+      ? ProposalThreeApp
+      : App;
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

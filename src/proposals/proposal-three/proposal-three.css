@@ -1,0 +1,527 @@
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.proposal-three {
+  background: #f5f7fa;
+  min-height: 100vh;
+  color: #0f171f;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.proposal-three main.p3-main {
+  max-width: none;
+  margin: 0;
+  padding: 24px 32px 40px;
+}
+
+.p3-subnav {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  border-bottom: 1px solid #e2e4e5;
+  margin-bottom: 20px;
+  overflow: auto;
+}
+
+.p3-subnav button {
+  padding: 8px 12px 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--subdued);
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+
+.p3-subnav button[aria-current="page"] {
+  color: var(--brand);
+  border-bottom-color: var(--interactive);
+}
+
+.p3-stage {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.p3-panel {
+  display: flex;
+  flex-direction: column;
+  width: 340px;
+  flex: 0 0 340px;
+  max-height: min(780px, calc(100vh - 210px));
+  background: #fff;
+  border: 1px solid #d5dde5;
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.p3-panel-rights {
+  flex: 1 1 420px;
+  width: auto;
+  min-width: 380px;
+}
+
+.p3-panel-enter {
+  animation: p3-enter 180ms ease;
+}
+
+@keyframes p3-enter {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.p3-panel-head,
+.p3-block {
+  padding: 16px 16px 8px;
+}
+
+.p3-tabs {
+  display: flex;
+  gap: 16px;
+  border-bottom: 1px solid #e2e4e5;
+  margin: 0 16px;
+}
+
+.p3-tabs button {
+  padding: 8px 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--subdued);
+  border-bottom: 2px solid transparent;
+}
+
+.p3-tabs button[aria-selected="true"] {
+  color: var(--brand);
+  border-bottom-color: var(--interactive);
+}
+
+.p3-search {
+  display: block;
+  margin: 12px 16px 0;
+}
+
+.p3-search input {
+  width: 100%;
+  min-height: 36px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+.p3-scroll {
+  overflow: auto;
+  min-height: 0;
+  padding: 8px 8px 12px;
+}
+
+.p3-group {
+  margin: 8px 8px 4px;
+}
+
+.p3-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+}
+
+.p3-group-head h2,
+.p3-section-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.p3-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  color: var(--interactive);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.p3-person,
+.p3-company {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.p3-person[aria-checked="true"],
+.p3-company[aria-current="true"],
+.p3-person:hover,
+.p3-company:hover {
+  background: #f3f6f9;
+}
+
+.p3-person .avatar {
+  flex: 0 0 auto;
+}
+
+.p3-person-copy,
+.p3-company-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.p3-person-name,
+.p3-profile-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.p3-meta {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--subdued);
+}
+
+.p3-meta .tag {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.p3-radio {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border: 1.5px solid #768799;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.p3-person[aria-checked="true"] .p3-radio {
+  border-color: var(--interactive);
+  box-shadow: inset 0 0 0 4px var(--interactive);
+}
+
+.p3-chevron {
+  flex: 0 0 auto;
+  display: block;
+  color: #0f171f;
+}
+
+.p3-add {
+  margin: 8px 16px 16px;
+  width: calc(100% - 32px);
+}
+
+.p3-profile-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.p3-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  color: var(--interactive);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.p3-facts {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+}
+
+.p3-facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.p3-facts dt {
+  color: var(--subdued);
+  font-size: 14px;
+}
+
+.p3-facts dd {
+  margin: 0;
+  font-size: 14px;
+  text-align: right;
+}
+
+.p3-auth {
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.p3-auth h3,
+.p3-companies h3 {
+  margin: 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.p3-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.p3-option input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--interactive);
+}
+
+.p3-auth fieldset {
+  border: 0;
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+.p3-auth legend {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.p3-implied {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--subdued);
+}
+
+.proposal-three .role-picker {
+  font-size: 14px;
+}
+
+.p3-fields {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.p3-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.p3-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.p3-text-button {
+  padding: 8px 0;
+  color: #9b2335;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.p3-account-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.p3-limit {
+  margin: 0;
+  color: var(--subdued);
+  font-size: 14px;
+  text-align: right;
+}
+
+.p3-limit input {
+  width: 120px;
+  min-height: 36px;
+  margin: 0;
+  text-align: right;
+}
+
+.p3-right-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 36px;
+  padding: 4px 0;
+}
+
+.p3-section {
+  padding: 8px 0 12px;
+  border-top: 1px solid #e2e4e5;
+}
+
+.p3-section h3 {
+  margin: 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.p3-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 16px 16px;
+}
+
+.p3-actions .primary-button {
+  font-size: 14px;
+}
+
+.p3-ghost {
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--interactive);
+}
+
+.p3-empty {
+  margin: 8px;
+  padding: 16px 8px;
+  color: var(--subdued);
+  font-size: 14px;
+}
+
+.p3-feedback {
+  margin: 8px 16px 0;
+  color: #9b2335;
+  font-size: 14px;
+}
+
+.p3-notice {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--subdued);
+}
+
+.p3-solid {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.p3-solid-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: #0f171f;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.p3-solid-trigger[aria-expanded="true"] {
+  border-color: var(--interactive);
+}
+
+.p3-solid-menu {
+  position: absolute;
+  z-index: 6;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow: auto;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 24px #002f6c18;
+}
+
+.p3-solid-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.p3-solid-menu button[aria-selected="true"],
+.p3-solid-menu button:hover {
+  background: #f3f6f9;
+}
+
+@media (max-width: 960px) {
+  .proposal-three main.p3-main {
+    padding: 16px;
+  }
+
+  .p3-stage {
+    flex-direction: column;
+  }
+
+  .p3-panel,
+  .p3-panel-rights {
+    width: 100%;
+    flex-basis: auto;
+    min-width: 0;
+    max-height: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p3-panel-enter {
+    animation: none;
+  }
+}
