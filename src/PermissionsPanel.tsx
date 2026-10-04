@@ -21,9 +21,13 @@ export type UserChanges = Pick<User, "name" | "email" | "role" | "job" | "status
 function readPermissions(panelUser: PanelUser): Permissions {
   return readStoredPermissions({ id: panelUser.id, role: panelUser.role });
 }
-export default function PermissionsPanel({ user, onClose, emailInUse, onDelete, onUpdate }: {
+export default function PermissionsPanel({ user, onClose, emailInUse, onDelete, onUpdate, companyContext, embedded = false }: {
   user: PanelUser; onClose: () => void; emailInUse: (email: string) => boolean; onDelete: () => void;
   onUpdate: (patch: UserChanges) => void;
+  /** Account catalog company. Defaults to the user's home company. */
+  companyContext?: number;
+  /** Flow inside a parent column instead of the overlay measurement. */
+  embedded?: boolean;
 }) {
   const panel = useRef<HTMLElement>(null);
   const scroll = useRef<HTMLDivElement>(null);
@@ -35,6 +39,7 @@ export default function PermissionsPanel({ user, onClose, emailInUse, onDelete, 
   const [job, setJob] = useState(user.job);
   const [error, setError] = useState("");
   useLayoutEffect(() => {
+    if (embedded) return;
     const element = panel.current;
     if (!element) return;
     let frame = 0;
@@ -67,7 +72,7 @@ export default function PermissionsPanel({ user, onClose, emailInUse, onDelete, 
       window.removeEventListener("scroll", schedule);
 
     };
-  }, []);
+  }, [embedded]);
   useLayoutEffect(() => {
     setValue(readPermissions(user)); setEditing(false); setError("");
     setRole(user.role); setJob(user.job); setName(user.name); setEmail(user.email); scroll.current?.scrollTo(0, 0);
@@ -121,8 +126,9 @@ export default function PermissionsPanel({ user, onClose, emailInUse, onDelete, 
       };
     });
   }
-  return <EditorContext.Provider value={{ editing, value, setValue, userId: user.id, role: effectiveRole, companyIndex: companyIndex(user.id) }}>
-    <aside ref={panel} className={`permissions-panel ${editing ? "editing-permissions" : ""}`} id="permissions-title" aria-label="Permissions">
+  const accountCompany = companyContext ?? companyIndex(user.id);
+  return <EditorContext.Provider value={{ editing, value, setValue, userId: user.id, role: effectiveRole, companyIndex: accountCompany }}>
+    <aside ref={panel} className={`permissions-panel ${editing ? "editing-permissions" : ""} ${embedded ? "permissions-panel-embedded" : ""}`} id="permissions-title" aria-label="Permissions">
       <div className="permissions-scroll" ref={scroll} tabIndex={0} aria-label={`Permissions for ${user.name}`}>
         <div className="permission-profile">
           <Avatar user={user} />

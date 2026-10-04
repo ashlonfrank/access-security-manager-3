@@ -68,9 +68,9 @@
 .p3-manage h1 {
   margin: 0;
   padding: 0 0 6px;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
-  line-height: 36px;
+  line-height: 32px;
   white-space: nowrap;
 }
 
@@ -171,10 +171,10 @@
 
 .p3-tabs button {
   margin-bottom: -1px;
-  padding: 8px 0 6px;
-  font-size: 16px;
+  padding: 4px 0 6px;
+  font-size: 24px;
   font-weight: 600;
-  line-height: 24px;
+  line-height: 32px;
   color: var(--subdued);
   border-bottom: 2px solid transparent;
 }
@@ -272,9 +272,9 @@
 .p3-person-name,
 .p3-profile-name {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 20px;
 }
 
 .p3-meta {
@@ -304,25 +304,27 @@
 }
 
 .p3-chevron {
-  flex: 0 0 auto;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
   display: block;
-  color: #0f171f;
+  color: currentColor;
 }
 
 .p3-fill {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: calc(100% - 32px);
+  width: auto;
   margin: 8px 16px 12px;
-  min-height: 40px;
-  padding: 8px 12px;
-  border-radius: 4px;
+  min-height: 36px;
+  padding: 6px 16px;
+  border-radius: 999px;
   background: var(--brand);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 24px;
 }
 
 .p3-fill:hover {
@@ -335,15 +337,43 @@
 }
 
 .p3-footer-split {
-  display: grid;
-  grid-template-columns: 1fr 1.2fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
 
+.p3-footer-split .p3-solid {
+  width: auto;
+}
+
+.p3-footer-split .p3-solid-menu {
+  min-width: 180px;
+}
+
 .p3-footer-split .p3-fill {
-  width: 100%;
+  width: auto;
   margin: 0;
+}
+
+.p3-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid var(--interactive);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--interactive);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.p3-menu-trigger:hover {
+  background: rgba(0, 47, 108, 0.06);
 }
 
 .p3-kicker {
@@ -669,6 +699,74 @@
   background: #f3f6f9;
 }
 
+.proposal-three {
+  --p3-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='black' d='M7.9675 12.3545 1.202 5.6315 2.435 4.3905 7.9645 9.885 13.497 4.361 14.7335 5.5995 7.9675 12.3545Z'/%3E%3C/svg%3E");
+  --p3-close: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='black' d='M16.8631 4.48688 15.5313 3.16563 10.0744 8.66813 4.46875 3.01562 3.13688 4.33625 8.75375 10 3.13688 15.6637 4.46875 16.9844 10.0744 11.3319 15.5313 16.8344 16.8631 15.5131 11.395 10Z'/%3E%3C/svg%3E");
+}
+
+.proposal-three .permissions-panel-embedded {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: 420px;
+  flex: 0 0 420px;
+  height: auto;
+  max-height: min(760px, calc(100vh - 180px));
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid #d5dde5;
+  border-radius: 8px;
+  background: #e2e8f0;
+  box-shadow: 0 1px 2px #002f6c0a;
+}
+
+.proposal-three .permissions-panel-embedded .permissions-scroll {
+  height: auto;
+  max-height: min(720px, calc(100vh - 200px));
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.proposal-three .permission-edit:has(img) img,
+.proposal-three .role-picker-chevron,
+.proposal-three .permission-close img {
+  width: 16px;
+  height: 16px;
+  opacity: 0;
+}
+
+.proposal-three .permission-edit:has(img)::after,
+.proposal-three .role-picker-trigger::after,
+.proposal-three .permission-close::after {
+  content: "";
+  width: 16px;
+  height: 16px;
+  margin-left: -16px;
+  flex: 0 0 16px;
+  background: currentColor;
+  mask-image: var(--p3-chevron);
+  mask-size: 16px 16px;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+.proposal-three .permission-close::after {
+  mask-image: var(--p3-close);
+  mask-size: 16px 16px;
+}
+
+.proposal-three .primary-button,
+.proposal-three .pill {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
 @media (max-width: 960px) {
   .proposal-three main.p3-main {
     padding: 16px;
@@ -699,10 +797,15 @@
 
   .p3-panel,
   .p3-panel-person,
-  .p3-panel-rights {
+  .p3-panel-rights,
+  .proposal-three .permissions-panel-embedded {
     width: 100%;
     flex-basis: auto;
     min-width: 0;
+    max-height: none;
+  }
+
+  .proposal-three .permissions-panel-embedded .permissions-scroll {
     max-height: none;
   }
 }

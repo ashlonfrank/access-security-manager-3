@@ -1,34 +1,29 @@
-import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import assets from "../../assets.json";
 import initialUsers from "../../users.json";
 import legacyRoles from "../../legacy-user-roles.json";
 import Avatar from "../../Avatar";
 import Modal from "../../Modal";
-import RoleSelect from "../../RoleSelect";
 import { normalizeDemoPersonas } from "../../demoPersonas";
 import { ensureDefaultPendingApproval } from "../../pendingApprovals";
+import PermissionsPanel from "../../PermissionsPanel";
+import {
+  EditorContext,
+  PermissionAccountsEditor,
+  PermissionCategoriesEditor,
+} from "../../permissionUi";
 import {
   businessRoles,
   coffeeCompanies,
   companyIndex,
   normalizeRole,
-  roleDescriptions,
   statusClass,
 } from "../../business";
+import { seedAccountAccess, visibleAccountsForUser } from "../../demoAccounts";
 import {
-  accountsForCompany,
-  formatAccountLabel,
-  seedAccountAccess,
-  visibleAccountsForUser,
-  type AccountProduct,
-  type DemoCompanyAccount,
-} from "../../demoAccounts";
-import {
-  paymentTypes,
   permissionsStorageKey,
   readStoredPermissions,
   seedPermissionsForUser,
-  statementTypes,
   type Permissions,
 } from "../../userPermissions";
 import type { User } from "../../App";
@@ -45,12 +40,42 @@ function Icon({ src, inverse = false }: { src: string; inverse?: boolean }) {
   );
 }
 
-function Chevron({ size = 16, direction = "right" }: { size?: 12 | 16; direction?: "right" | "down" }) {
-  const d = direction === "down" ? "M3.5 6 8 10.5 12.5 6" : "M6 3.5 10.5 8 6 12.5";
+function Chevron({ direction = "right" }: { direction?: "right" | "down" }) {
   return (
-    <svg className="p3-chevron" width={size} height={size} viewBox="0 0 16 16" aria-hidden="true">
-      <path d={d} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg className="p3-chevron" width={16} height={16} viewBox="0 0 16 16" aria-hidden="true">
+      <path
+        d="M7.9675 12.3545 1.202 5.6315 2.435 4.3905 7.9645 9.885 13.497 4.361 14.7335 5.5995 7.9675 12.3545Z"
+        fill="currentColor"
+        transform={direction === "right" ? "rotate(-90 8 8)" : undefined}
+      />
     </svg>
+  );
+}
+
+function CompanyEntitlements({ index }: { index: number }) {
+  const userId = `company-${index}`;
+  const [value, setValue] = useState<Permissions>(() => {
+    const seeded = seedPermissionsForUser({ id: userId, role: "Admin" });
+    return { ...seeded, accounts: seedAccountAccess(userId, "Admin", seeded, index) };
+  });
+  useEffect(() => {
+    const seeded = seedPermissionsForUser({ id: userId, role: "Admin" });
+    setValue({ ...seeded, accounts: seedAccountAccess(userId, "Admin", seeded, index) });
+  }, [index, userId]);
+  const company = coffeeCompanies[index];
+  return (
+    <EditorContext.Provider value={{ editing: false, value, setValue, userId, role: "Admin", companyIndex: index }}>
+      <section className="p3-panel p3-panel-rights p3-panel-enter permissions-panel permissions-panel-embedded" aria-label={`${company.location} accounts`}>
+        <div className="permissions-scroll">
+          <div className="p3-block">
+            <h2 className="p3-profile-name">{company.location}</h2>
+            <p className="p3-meta">{company.name}</p>
+          </div>
+          <PermissionCategoriesEditor />
+          <PermissionAccountsEditor />
+        </div>
+      </section>
+    </EditorContext.Provider>
   );
 }
 
@@ -96,100 +121,6 @@ function companiesFor(user: User): number[] {
   return [companyIndex(user.id)];
 }
 
-function money(value: string) {
-  const amount = Number(value);
-  if (!Number.isFinite(amount)) return value;
-  return amount.toLocaleString("en-US", { style: "currency", currency: "USD" });
-}
-
-function withToken(value: Permissions): Permissions {
-  return value.mfa
-    ? { ...value, token: value.token === "Hard token" ? "Hard token" : "Soft token" }
-    : { ...value, mfa: false, token: "No token" };
-}
-
-function sectionsFor(product: AccountProduct): { title: string; names: string[] }[] {
-  if (product === "credit_card") {
-    return [
-      { title: "Statements and documents", names: ["See activity and balances"] },
-      { title: "Credit cards", names: ["Card access"] },
-    ];
-  }
-  if (product === "merchant_services") {
-    return [{ title: "Merchant services", names: ["Merchant services"] }];
-  }
-  if (product === "payroll") {
-    return [
-      {
-        title: "Money movement",
-        names: ["ACH payments", "ACH vendor payments", "Transfers and payments"],
-      },
-    ];
-  }
-  return [
-    { title: "Statements and documents", names: [...statementTypes] },
-    { title: "Money movement", names: [...paymentTypes, "Requires approval"] },
-  ];
-}
-
-function SolidSelect({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: { id: string; label: string }[];
-  onChange: (id: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
-  const id = useId();
-  const current = options.find((option) => option.id === value) ?? options[0];
-  useEffect(() => {
-    const close = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
-  }, []);
-  return (
-    <div className="p3-solid" ref={root}>
-      <span id={id}>{label}</span>
-      <button
-        type="button"
-        className="p3-solid-trigger"
-        aria-labelledby={id}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((next) => !next)}
-      >
-        <span>{current?.label ?? "No accounts"}</span>
-        <Chevron direction="down" />
-      </button>
-      {open && (
-        <div className="p3-solid-menu" role="listbox" aria-labelledby={id}>
-          {options.map((option) => (
-            <button
-              type="button"
-              role="option"
-              aria-selected={option.id === current?.id}
-              key={option.id}
-              onClick={() => {
-                onChange(option.id);
-                setOpen(false);
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function ProposalThreeApp() {
   const searchRef = useRef<HTMLInputElement>(null);
   const [users, setUsers] = useState<User[]>(readUsers);
@@ -198,12 +129,6 @@ export default function ProposalThreeApp() {
   const [sortName, setSortName] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<number | null>(null);
-  const [accountId, setAccountId] = useState("");
-  const [editingUser, setEditingUser] = useState(false);
-  const [editingRights, setEditingRights] = useState(false);
-  const [draft, setDraft] = useState({ name: "", email: "", role: businessRoles[0], job: "" });
-  const [rights, setRights] = useState<Permissions | null>(null);
-  const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [dialog, setDialog] = useState<
     | { kind: "add"; role: string }
@@ -240,39 +165,11 @@ export default function ProposalThreeApp() {
     .map((company, index) => ({ company, index, label: `${company.name} · ${company.location}` }))
     .filter((row) => row.label.toLowerCase().includes(needle));
 
-  useEffect(() => {
-    if (!selectedUser) {
-      setRights(null);
-      return;
-    }
-    setRights(readStoredPermissions(selectedUser));
-    setEditingUser(false);
-    setEditingRights(false);
-    setError("");
-    setDraft({
-      name: selectedUser.name,
-      email: selectedUser.email,
-      role: selectedUser.role,
-      job: selectedUser.job,
-    });
-  }, [selectedUser?.id]);
-
-  const companyForRights = selectedCompany;
-  const visibleAccounts =
-    selectedUser && companyForRights !== null && rights
-      ? visibleAccountsForUser(selectedUser.id, editingUser ? draft.role : selectedUser.role, rights, companyForRights)
-      : [];
-  const account = visibleAccounts.find((row) => row.id === accountId) ?? visibleAccounts[0];
-
   function activateTab(next: "users" | "companies") {
     setTab(next);
     setSelectedCompany(null);
     setSelectedUserId(null);
-    setAccountId("");
-    setEditingUser(false);
-    setEditingRights(false);
     setManageOpen(false);
-    setError("");
   }
 
   function onManageTabKey(event: KeyboardEvent<HTMLButtonElement>) {
@@ -293,77 +190,11 @@ export default function ProposalThreeApp() {
 
   function selectCompany(index: number) {
     setSelectedCompany(index);
-    setAccountId("");
     if (tab === "companies") setSelectedUserId(null);
-    setEditingRights(false);
   }
 
   function persistUser(next: User) {
     setUsers((current) => current.map((user) => (user.id === next.id ? next : user)));
-  }
-
-  function saveProfile() {
-    if (!selectedUser || !rights) return;
-    const email = draft.email.trim().toLowerCase();
-    if (!draft.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Enter a full name and a valid email address.");
-      return;
-    }
-    if (users.some((user) => user.id !== selectedUser.id && user.email.toLowerCase() === email)) {
-      setError("This email address is already assigned to another user.");
-      return;
-    }
-    if (!draft.job.trim()) {
-      setError("Enter a job title.");
-      return;
-    }
-    const nextRights = withToken(rights);
-    try {
-      localStorage.setItem(permissionsStorageKey(selectedUser.id), JSON.stringify(nextRights));
-    } catch {
-      setError("Changes could not be saved. Please try again.");
-      return;
-    }
-    persistUser({
-      ...selectedUser,
-      name: draft.name.trim(),
-      email,
-      role: draft.role,
-      job: draft.job.trim(),
-    });
-    setRights(nextRights);
-    setEditingUser(false);
-    setError("");
-  }
-
-  function changeRole(role: string) {
-    if (!selectedUser) return;
-    setDraft((current) => ({ ...current, role }));
-    setRights(seedPermissionsForUser({ id: selectedUser.id, role }));
-    setAccountId("");
-  }
-
-  function saveRights() {
-    if (!selectedUser || !rights) return;
-    if (
-      paymentTypes.some((name) => {
-        const limit = rights.limits[name] ?? "";
-        return limit.trim() === "" || !/^\d+(\.\d{1,2})?$/.test(limit) || Number(limit) < 0;
-      })
-    ) {
-      setError("Enter non-negative daily limits with up to two decimal places.");
-      return;
-    }
-    const saved = withToken(rights);
-    try {
-      localStorage.setItem(permissionsStorageKey(selectedUser.id), JSON.stringify(saved));
-    } catch {
-      setError("Changes could not be saved. Please try again.");
-      return;
-    }
-    setRights(saved);
-    setEditingRights(false);
-    setError("");
   }
 
   function addUser(event: FormEvent<HTMLFormElement>) {
@@ -409,17 +240,6 @@ export default function ProposalThreeApp() {
     setSelectedCompany(null);
     setDialog(null);
   }
-
-  function accountChecked(row: DemoCompanyAccount) {
-    if (!selectedUser || !rights || selectedCompany === null) return false;
-    if (row.id in rights.accounts) return rights.accounts[row.id];
-    return seedAccountAccess(selectedUser.id, selectedUser.role, rights, selectedCompany)[row.id] ?? false;
-  }
-
-  const showRightsPanel = tab === "users" && Boolean(selectedUser && selectedCompany !== null && rights);
-  const companyAccounts = selectedCompany !== null ? accountsForCompany(selectedCompany) : [];
-  const openCompanyAccountId = accountId || companyAccounts[0]?.id || "";
-  const authType = rights ? (rights.mfa ? (rights.token === "Hard token" ? "Hard token" : "Soft token") : "No token") : "No token";
 
   return (
     <div className="proposal-three">
@@ -572,94 +392,20 @@ export default function ProposalThreeApp() {
           {tab === "users" && selectedUser && (
             <section className="p3-panel p3-panel-person p3-panel-enter" aria-label={`${selectedUser.name} companies`}>
               <div className="p3-block">
-                <div className="p3-profile-top">
-                  <div>
-                    <h2 className="p3-profile-name">{editingUser ? "Edit user" : selectedUser.name}</h2>
-                    {!editingUser && (
-                      <p className="p3-meta">
-                        <span className={`tag status-tag ${statusClass(selectedUser.status)}`}>{selectedUser.status}</span>
-                        {" · "}
-                        {selectedUser.role}
-                      </p>
-                    )}
-                  </div>
-                  {editingUser ? (
-                    <button className="p3-edit" type="button" onClick={saveProfile}>Save</button>
-                  ) : (
-                    <button className="p3-edit" type="button" onClick={() => { setEditingRights(false); setManageOpen(false); setEditingUser(true); setError(""); }}>
-                      Edit
-                      <Chevron size={12} />
-                    </button>
-                  )}
-                </div>
-                {editingUser && error && <p className="p3-feedback" role="alert">{error}</p>}
-                {editingUser ? (
-                  <div className="p3-fields">
-                    <label>
-                      Full name
-                      <input value={draft.name} maxLength={80} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
-                    </label>
-                    <label>
-                      Email address
-                      <input type="email" value={draft.email} onChange={(event) => setDraft({ ...draft, email: event.target.value })} />
-                    </label>
-                    <RoleSelect value={draft.role} onChange={changeRole} />
-                    <p className="p3-meta">{roleDescriptions[draft.role]}</p>
-                    <label>
-                      Job title
-                      <input value={draft.job} maxLength={80} onChange={(event) => setDraft({ ...draft, job: event.target.value })} />
-                    </label>
-                    <div className="p3-status-row">
-                      <span>Status</span>
-                      <span className={`tag status-tag ${statusClass(selectedUser.status)}`}>{selectedUser.status}</span>
-                    </div>
-                    {rights && (
-                      <div className="p3-auth">
-                        <h3>Authentication</h3>
-                        <label className="p3-option">
-                          <input
-                            type="checkbox"
-                            checked={rights.mfa}
-                            onChange={(event) => {
-                              const enabled = event.target.checked;
-                              setRights({
-                                ...rights,
-                                mfa: enabled,
-                                token: enabled ? (rights.token === "Hard token" ? "Hard token" : "Soft token") : "No token",
-                              });
-                            }}
-                          />
-                          Multi-factor authentication
-                        </label>
-                        <fieldset>
-                          <legend>Authentication type</legend>
-                          {rights.mfa ? (
-                            (["Soft token", "Hard token"] as const).map((token) => (
-                              <label className="p3-option" key={token}>
-                                <input type="radio" name="p3-token" checked={authType === token} onChange={() => setRights({ ...rights, token })} />
-                                {token}
-                              </label>
-                            ))
-                          ) : (
-                            <p className="p3-implied">No token</p>
-                          )}
-                        </fieldset>
-                      </div>
-                    )}
-                    <button className="p3-ghost" type="button" onClick={() => { setEditingUser(false); setRights(readStoredPermissions(selectedUser)); setError(""); }}>
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <p className="p3-meta p3-email">{selectedUser.email}</p>
-                )}
+                <h2 className="p3-profile-name">{selectedUser.name}</h2>
+                <p className="p3-meta">
+                  <span className={`tag status-tag ${statusClass(selectedUser.status)}`}>{selectedUser.status}</span>
+                  {" · "}
+                  {selectedUser.role}
+                </p>
+                <p className="p3-meta p3-email">{selectedUser.email}</p>
               </div>
               <div className="p3-scroll">
-                {companiesFor(editingUser ? { ...selectedUser, role: draft.role } : selectedUser).map((index) => {
+                {companiesFor(selectedUser).map((index) => {
                   const entitled = visibleAccountsForUser(
                     selectedUser.id,
-                    editingUser ? draft.role : selectedUser.role,
-                    rights ?? readStoredPermissions(selectedUser),
+                    selectedUser.role,
+                    readStoredPermissions(selectedUser),
                     index,
                   ).length;
                   return (
@@ -673,169 +419,48 @@ export default function ProposalThreeApp() {
                   );
                 })}
               </div>
-              {!editingUser && (
-                <div className="p3-card-footer p3-footer-split">
-                  <div className="p3-solid">
-                    <button type="button" className="p3-solid-trigger" aria-expanded={manageOpen} aria-haspopup="menu" onClick={() => setManageOpen((open) => !open)}>
-                      <span>Manage user</span>
-                      <Chevron direction="down" />
-                    </button>
-                    {manageOpen && (
-                      <div className="p3-solid-menu" role="menu">
-                        <button type="button" role="menuitem" onClick={() => { setManageOpen(false); setDialog({ kind: "delete", user: selectedUser }); }}>
-                          Remove user
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    className="p3-fill"
-                    type="button"
-                    onClick={() => {
-                      const index = companiesFor(selectedUser)[0];
-                      if (index !== undefined) selectCompany(index);
-                    }}
-                  >
-                    Assign user rights
+              <div className="p3-card-footer p3-footer-split">
+                <div className="p3-solid">
+                  <button type="button" className="p3-menu-trigger" aria-expanded={manageOpen} aria-haspopup="menu" onClick={() => setManageOpen((open) => !open)}>
+                    <span>Manage user</span>
+                    <Chevron direction="down" />
                   </button>
-                </div>
-              )}
-            </section>
-          )}
-
-          {showRightsPanel && selectedUser && selectedCompany !== null && rights && (
-            <section className="p3-panel p3-panel-rights p3-panel-enter" aria-label={`${coffeeCompanies[selectedCompany].location} accounts`}>
-              <div className="p3-block">
-                <div className="p3-profile-top">
-                  <h2 className="p3-profile-name">{coffeeCompanies[selectedCompany].location}</h2>
-                  {account && (
-                    editingRights ? (
-                      <button className="p3-edit" type="button" onClick={saveRights}>Save</button>
-                    ) : (
-                      <button className="p3-edit" type="button" onClick={() => { setEditingUser(false); setEditingRights(true); setError(""); }}>
-                        Edit
-                        <Chevron size={12} />
+                  {manageOpen && (
+                    <div className="p3-solid-menu" role="menu">
+                      <button type="button" role="menuitem" onClick={() => { setManageOpen(false); setDialog({ kind: "delete", user: selectedUser }); }}>
+                        Remove user
                       </button>
-                    )
+                    </div>
                   )}
                 </div>
-                <p className="p3-kicker">Open accounts</p>
-                <p className="p3-meta">See, upload, and download account opening documents</p>
-                {error && <p className="p3-feedback" role="alert">{error}</p>}
-                {visibleAccounts.length === 0 && (
-                  <p className="p3-empty">This role has no accounts at {coffeeCompanies[selectedCompany].location}.</p>
-                )}
+                <button
+                  className="p3-fill"
+                  type="button"
+                  onClick={() => {
+                    const index = companiesFor(selectedUser)[0];
+                    if (index !== undefined) selectCompany(index);
+                  }}
+                >
+                  Assign user rights
+                </button>
               </div>
-              <div className="p3-scroll">
-                {visibleAccounts.map((row) => {
-                  const open = row.id === account?.id;
-                  return (
-                    <div className="p3-account" key={row.id}>
-                      <button type="button" className="p3-account-toggle" aria-expanded={open} onClick={() => setAccountId(row.id)}>
-                        <Chevron direction={open ? "down" : "right"} />
-                        <span>{formatAccountLabel(row, selectedUser.id)}</span>
-                      </button>
-                      {open && (
-                        <div className="p3-account-body">
-                          <label className="p3-line">
-                            <span>Can use this account</span>
-                            {editingRights ? (
-                              <input
-                                type="checkbox"
-                                checked={accountChecked(row)}
-                                onChange={(event) => setRights({ ...rights, accounts: { ...rights.accounts, [row.id]: event.target.checked } })}
-                              />
-                            ) : (
-                              <span className="p3-state">{accountChecked(row) ? "Enabled" : "Off"}</span>
-                            )}
-                          </label>
-                          {sectionsFor(row.product).map((section) => (
-                            <div className="p3-section" key={section.title}>
-                              <h3>{section.title}</h3>
-                              {section.names.map((name) => {
-                                const on = Boolean(rights.allowed[name]);
-                                const isPayment = paymentTypes.includes(name);
-                                return (
-                                  <div className="p3-line" key={name}>
-                                    <span>{name}</span>
-                                    {editingRights ? (
-                                      <span className="p3-line-edit">
-                                        <input
-                                          type="checkbox"
-                                          checked={on}
-                                          aria-label={name}
-                                          onChange={(event) => setRights({ ...rights, allowed: { ...rights.allowed, [name]: event.target.checked } })}
-                                        />
-                                        {isPayment && (
-                                          <input
-                                            className="p3-limit-input"
-                                            inputMode="decimal"
-                                            aria-label={`${name} daily limit`}
-                                            value={rights.limits[name] ?? ""}
-                                            onChange={(event) => setRights({ ...rights, limits: { ...rights.limits, [name]: event.target.value } })}
-                                          />
-                                        )}
-                                      </span>
-                                    ) : (
-                                      <span className="p3-state">{isPayment ? (on ? money(rights.limits[name] ?? "0") : "Off") : on ? "Enabled" : "Off"}</span>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              {editingRights && (
-                <div className="p3-actions">
-                  <button className="p3-ghost" type="button" onClick={() => { setEditingRights(false); setRights(readStoredPermissions(selectedUser)); setError(""); }}>
-                    Cancel
-                  </button>
-                  <button className="p3-fill p3-fill-auto" type="button" onClick={saveRights}>Save</button>
-                </div>
-              )}
             </section>
           )}
 
-          {tab === "companies" && selectedCompany !== null && (
-            <section className="p3-panel p3-panel-rights p3-panel-enter" aria-label={`${coffeeCompanies[selectedCompany].location} accounts`}>
-              <div className="p3-block">
-                <h2 className="p3-profile-name">{coffeeCompanies[selectedCompany].location}</h2>
-                <p className="p3-meta">{coffeeCompanies[selectedCompany].name}</p>
-                <p className="p3-kicker">Open accounts</p>
-                <p className="p3-meta">See, upload, and download account opening documents</p>
-              </div>
-              <div className="p3-scroll">
-                {companyAccounts.map((row) => {
-                  const open = row.id === openCompanyAccountId;
-                  return (
-                    <div className="p3-account" key={row.id}>
-                      <button type="button" className="p3-account-toggle" aria-expanded={open} onClick={() => setAccountId(row.id)}>
-                        <Chevron direction={open ? "down" : "right"} />
-                        <span>{formatAccountLabel(row, `company-${selectedCompany}`)}</span>
-                      </button>
-                      {open && (
-                        <div className="p3-account-body">
-                          {sectionsFor(row.product).map((section) => (
-                            <div className="p3-section" key={section.title}>
-                              <h3>{section.title}</h3>
-                              {section.names.map((name) => (
-                                <p className="p3-catalog" key={name}>{name}</p>
-                              ))}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
+          {tab === "users" && selectedUser && selectedCompany !== null && (
+            <PermissionsPanel
+              key={`${selectedUser.id}:${selectedCompany}`}
+              embedded
+              companyContext={selectedCompany}
+              user={selectedUser}
+              onClose={() => setSelectedCompany(null)}
+              emailInUse={(email) => users.some((row) => row.id !== selectedUser.id && row.email.toLowerCase() === email)}
+              onDelete={() => setDialog({ kind: "delete", user: selectedUser })}
+              onUpdate={(patch) => persistUser({ ...selectedUser, ...patch })}
+            />
           )}
+
+          {tab === "companies" && selectedCompany !== null && <CompanyEntitlements index={selectedCompany} />}
         </div>
       </main>
       {dialog && (
@@ -859,7 +484,7 @@ export default function ProposalThreeApp() {
               <label>Job<input name="job" required maxLength={80} /></label>
               {formError && <p className="p3-feedback" role="alert">{formError}</p>}
               <div className="dialog-actions">
-                <button className="p3-ghost" type="button" onClick={() => setDialog(null)}>Cancel</button>
+                <button className="pill" type="button" onClick={() => setDialog(null)}>Cancel</button>
                 <button className="primary-button" type="submit">Add a user</button>
               </div>
             </form>
@@ -867,8 +492,8 @@ export default function ProposalThreeApp() {
             <>
               <p className="dialog-description">{dialog.user.name} will leave this roster, including their saved permissions.</p>
               <div className="dialog-actions">
-                <button className="p3-ghost" type="button" onClick={() => setDialog(null)}>Cancel</button>
-                <button className="primary-button" type="button" onClick={() => removeUser(dialog.user)}>Remove user</button>
+                <button className="pill" type="button" onClick={() => setDialog(null)}>Cancel</button>
+                <button className="pill danger" type="button" onClick={() => removeUser(dialog.user)}>Remove user</button>
               </div>
             </>
           ) : (
@@ -903,7 +528,7 @@ function UserGroup({
         {onSort && (
           <button className="p3-sort" type="button" onClick={onSort}>
             Sort by: {sortName ? "Name" : "Name, reversed"}
-            <Chevron size={16} direction="down" />
+            <Chevron direction="down" />
           </button>
         )}
       </div>
