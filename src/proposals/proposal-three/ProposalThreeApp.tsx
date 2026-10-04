@@ -211,6 +211,7 @@ export default function ProposalThreeApp() {
     | null
   >(null);
   const [formError, setFormError] = useState("");
+  const [manageOpen, setManageOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -264,6 +265,7 @@ export default function ProposalThreeApp() {
 
   function selectUser(user: User) {
     setSelectedUserId(user.id);
+    setManageOpen(false);
     if (tab === "users") setSelectedCompany(null);
   }
 
@@ -448,33 +450,27 @@ export default function ProposalThreeApp() {
           ))}
         </nav>
       </header>
-      <div className="back-bar">
-        <button
-          type="button"
-          onClick={() => {
-            setSelectedUserId(null);
-            setSelectedCompany(null);
-          }}
-        >
-          <Icon src={assets.imgFill5} />
-          Back
-        </button>
-        <div>Access &amp; Security Manager</div>
-      </div>
       <main id="proposal-three-main" className="p3-main">
-        <div className="p3-subnav" aria-label="Access and security sections">
-          {["All users", "Account activity", "Chase Dual Control", "IP Security", "Demos and user guides"].map((label) => (
-            <button
-              key={label}
-              type="button"
-              aria-current={label === "All users" ? "page" : undefined}
-              onClick={() => {
-                if (label !== "All users") setNotice("This preview covers All users.");
-              }}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="p3-titlebar">
+          <h1>Access and Security Manager</h1>
+          <div className="p3-subnav" aria-label="Access and security sections">
+            <button type="button" className="p3-chip" aria-current="page">All users</button>
+            {["Account activity", "Chase Dual Control", "IP Security", "Demos and user guides"].map((label) => (
+              <button key={label} type="button" onClick={() => setNotice("This preview covers All users.")}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <label className="p3-title-search">
+            <span className="visually-hidden">Search</span>
+            <input
+              ref={searchRef}
+              id="p3-search"
+              value={query}
+              placeholder={tab === "users" ? "Search users" : "Search companies"}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </label>
         </div>
         {notice && <p className="p3-notice">{notice}</p>}
         <div className="p3-stage">
@@ -487,20 +483,13 @@ export default function ProposalThreeApp() {
                 Companies
               </button>
             </div>
-            <label className="p3-search">
-              <span className="visually-hidden">Search</span>
-              <input
-                ref={searchRef}
-                id="p3-search"
-                value={query}
-                placeholder={tab === "users" ? "Search users" : "Search companies"}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-            </label>
             <div className="p3-scroll">
               {tab === "users" ? (
                 <>
                   <UserGroup title="Administrators" users={administrators} selectedId={selectedUserId} onSelect={selectUser} sortName={sortName} onSort={() => setSortName((value) => !value)} />
+                  <button className="primary-button p3-add" type="button" onClick={() => { setFormError(""); setDialog({ kind: "add" }); }}>
+                    Add a user
+                  </button>
                   <UserGroup title="Team" users={team} selectedId={selectedUserId} onSelect={selectUser} />
                   {visibleUsers.length === 0 && <p className="p3-empty">No users match that search.</p>}
                 </>
@@ -526,29 +515,26 @@ export default function ProposalThreeApp() {
                 </div>
               )}
             </div>
-            {tab === "users" && (
-              <button className="primary-button p3-add" type="button" onClick={() => { setFormError(""); setDialog({ kind: "add" }); }}>
-                Add a user
-              </button>
-            )}
           </section>
 
           {showUserPanel && tab === "users" && selectedUser && (
-            <section className="p3-panel p3-panel-enter" aria-label={`${selectedUser.name} details`}>
+            <section className="p3-panel p3-panel-person p3-panel-enter" aria-label={`${selectedUser.name} companies`}>
               <div className="p3-block">
                 <div className="p3-profile-top">
                   <div>
-                    <h2 className="p3-profile-name">{selectedUser.name}</h2>
-                    <p className="p3-meta">
-                      <span className={`tag status-tag ${statusClass(selectedUser.status)}`}>{selectedUser.status}</span>
-                      {" · "}
-                      {selectedUser.role}
-                    </p>
+                    <h2 className="p3-profile-name">{editingUser ? "Edit user" : selectedUser.name}</h2>
+                    {!editingUser && (
+                      <p className="p3-meta">
+                        <span className={`tag status-tag ${statusClass(selectedUser.status)}`}>{selectedUser.status}</span>
+                        {" · "}
+                        {selectedUser.role}
+                      </p>
+                    )}
                   </div>
                   {editingUser ? (
                     <button className="p3-edit" type="button" onClick={saveProfile}>Save</button>
                   ) : (
-                    <button className="p3-edit" type="button" onClick={() => { setEditingRights(false); setEditingUser(true); setError(""); }}>
+                    <button className="p3-edit" type="button" onClick={() => { setEditingRights(false); setManageOpen(false); setEditingUser(true); setError(""); }}>
                       Edit
                       <Chevron size={12} />
                     </button>
@@ -575,19 +561,9 @@ export default function ProposalThreeApp() {
                       <span>Status</span>
                       <span className={`tag status-tag ${statusClass(selectedUser.status)}`}>{selectedUser.status}</span>
                     </div>
-                  </div>
-                ) : (
-                  <dl className="p3-facts">
-                    <div><dt>Job</dt><dd>{selectedUser.job}</dd></div>
-                    <div><dt>Email</dt><dd>{selectedUser.email}</dd></div>
-                    <div><dt>Role</dt><dd>{selectedUser.role}</dd></div>
-                  </dl>
-                )}
-                {rights && (
-                  <div className="p3-auth">
-                    <h3>Authentication</h3>
-                    {editingUser ? (
-                      <>
+                    {rights && (
+                      <div className="p3-auth">
+                        <h3>Authentication</h3>
                         <label className="p3-option">
                           <input
                             type="checkbox"
@@ -616,15 +592,15 @@ export default function ProposalThreeApp() {
                             <p className="p3-implied">No token</p>
                           )}
                         </fieldset>
-                      </>
-                    ) : (
-                      <p className="p3-meta">{authType}</p>
+                      </div>
                     )}
+                    <button className="p3-ghost" type="button" onClick={() => { setEditingUser(false); setRights(readStoredPermissions(selectedUser)); setError(""); }}>
+                      Cancel
+                    </button>
                   </div>
+                ) : (
+                  <p className="p3-meta p3-email">{selectedUser.email}</p>
                 )}
-                <div className="p3-companies">
-                  <h3>Companies</h3>
-                </div>
               </div>
               <div className="p3-scroll">
                 {companiesFor(editingUser ? { ...selectedUser, role: draft.role } : selectedUser).map((index) => {
@@ -645,17 +621,23 @@ export default function ProposalThreeApp() {
                   );
                 })}
               </div>
-              <div className="p3-block">
-                {editingUser ? (
-                  <button className="p3-ghost" type="button" onClick={() => { setEditingUser(false); setRights(readStoredPermissions(selectedUser)); setError(""); }}>
-                    Cancel
-                  </button>
-                ) : (
-                  <button className="p3-text-button" type="button" onClick={() => setDialog({ kind: "delete", user: selectedUser })}>
-                    Remove user
-                  </button>
-                )}
-              </div>
+              {!editingUser && (
+                <div className="p3-card-footer">
+                  <div className="p3-solid">
+                    <button type="button" className="p3-solid-trigger" aria-expanded={manageOpen} aria-haspopup="menu" onClick={() => setManageOpen((open) => !open)}>
+                      <span>Manage user</span>
+                      <Chevron direction="down" />
+                    </button>
+                    {manageOpen && (
+                      <div className="p3-solid-menu" role="menu">
+                        <button type="button" role="menuitem" onClick={() => { setManageOpen(false); setDialog({ kind: "delete", user: selectedUser }); }}>
+                          Remove user
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </section>
           )}
 

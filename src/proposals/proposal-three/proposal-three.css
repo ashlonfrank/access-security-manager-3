@@ -11,7 +11,7 @@
 }
 
 .proposal-three {
-  background: #f5f7fa;
+  background: #e7edf2;
   min-height: 100vh;
   color: #0f171f;
   font-size: 14px;
@@ -21,31 +21,63 @@
 .proposal-three main.p3-main {
   max-width: none;
   margin: 0;
-  padding: 24px 32px 40px;
+  padding: 20px 28px 40px;
+  background: #e7edf2;
+}
+
+.p3-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  min-height: 36px;
+}
+
+.p3-title-search {
+  margin-left: auto;
+  min-width: 220px;
+}
+
+.p3-title-search input {
+  width: 220px;
+  min-height: 36px;
+  margin: 0;
+  border: 1px solid #d5dde5;
+  border-radius: 8px;
+  background: #fff;
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+.p3-titlebar h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
 }
 
 .p3-subnav {
   display: flex;
-  gap: 8px;
-  align-items: flex-end;
-  border-bottom: 1px solid #e2e4e5;
-  margin-bottom: 20px;
+  align-items: center;
+  gap: 4px;
   overflow: auto;
 }
 
 .p3-subnav button {
-  padding: 8px 12px 10px;
+  padding: 4px 10px;
   font-size: 14px;
   line-height: 1.5;
   font-weight: 600;
   color: var(--subdued);
   white-space: nowrap;
-  border-bottom: 2px solid transparent;
 }
 
-.p3-subnav button[aria-current="page"] {
-  color: var(--brand);
-  border-bottom-color: var(--interactive);
+.p3-chip {
+  border-radius: 999px;
+  background: #fff;
+  color: var(--brand) !important;
+  border: 1px solid #d5dde5;
 }
 
 .p3-stage {
@@ -57,20 +89,41 @@
 .p3-panel {
   display: flex;
   flex-direction: column;
-  width: 360px;
-  flex: 0 0 360px;
-  max-height: min(780px, calc(100vh - 210px));
+  width: 320px;
+  flex: 0 0 320px;
+  max-height: min(760px, calc(100vh - 160px));
   overflow: hidden;
   background: #fff;
   border: 1px solid #d5dde5;
   border-radius: 8px;
+  box-shadow: 0 1px 2px #002f6c0a;
   min-width: 0;
 }
 
+.p3-panel-person {
+  flex-basis: 300px;
+  width: 300px;
+}
+
 .p3-panel-rights {
-  flex: 1 1 420px;
-  width: auto;
-  min-width: 380px;
+  flex: 0 0 420px;
+  width: 420px;
+  min-width: 0;
+}
+
+.p3-email {
+  margin: 8px 0 0;
+}
+
+.p3-card-footer {
+  position: relative;
+  padding: 12px;
+  border-top: 1px solid #e6ebf0;
+}
+
+.p3-card-footer .p3-solid-menu {
+  top: auto;
+  bottom: calc(100% + 4px);
 }
 
 .p3-panel-enter {
@@ -174,8 +227,9 @@
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 8px;
-  border-radius: 8px;
+  padding: 10px 8px;
+  border-bottom: 1px solid #e6ebf0;
+  border-radius: 0;
   text-align: left;
 }
 
@@ -239,8 +293,11 @@
 }
 
 .p3-add {
-  margin: 8px 16px 16px;
+  margin: 4px 16px 12px;
   width: calc(100% - 32px);
+  border-radius: 8px;
+  min-height: 40px;
+  font-size: 14px;
 }
 
 .p3-profile-top {
@@ -511,11 +568,25 @@
     padding: 16px;
   }
 
+  .p3-titlebar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
   .p3-stage {
     flex-direction: column;
   }
 
+  .p3-title-search,
+  .p3-title-search input {
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+  }
+
   .p3-panel,
+  .p3-panel-person,
   .p3-panel-rights {
     width: 100%;
     flex-basis: auto;
