@@ -290,12 +290,94 @@
   color: #0f171f;
 }
 
-.p3-add {
-  margin: 4px 16px 12px;
+.p3-fill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: calc(100% - 32px);
-  border-radius: 8px;
+  margin: 8px 16px 12px;
   min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: var(--brand);
+  color: #fff;
   font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.p3-fill:hover {
+  background: #00438b;
+}
+
+.p3-fill-auto {
+  width: auto;
+  margin: 0;
+}
+
+.p3-footer-split {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.p3-footer-split .p3-fill {
+  width: 100%;
+  margin: 0;
+}
+
+.p3-kicker {
+  margin: 12px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.p3-account-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 8px;
+  border-bottom: 1px solid #e6ebf0;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.p3-account-body {
+  padding: 4px 8px 12px 28px;
+}
+
+.p3-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.p3-line-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.p3-state {
+  color: var(--subdued);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.p3-limit-input {
+  width: 96px;
+  min-height: 32px;
+  margin: 0;
+  text-align: right;
 }
 
 .p3-profile-top {

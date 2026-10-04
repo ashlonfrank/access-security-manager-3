@@ -205,7 +205,7 @@ export default function ProposalThreeApp() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [dialog, setDialog] = useState<
-    | { kind: "add" }
+    | { kind: "add"; role: string }
     | { kind: "delete"; user: User }
     | { kind: "info"; title: string; content: string }
     | null
@@ -434,14 +434,14 @@ export default function ProposalThreeApp() {
           </div>
         </div>
         <nav className="primary-nav" aria-label="Business banking">
-          {["Account", "Pay & transfer", "Collect & deposit", "Tools & insights", "Access & security"].map((label) => (
+          {["Accounts", "Pay & Transfer", "Collect & deposit", "Account management", "Security"].map((label) => (
             <button
               key={label}
               type="button"
-              aria-current={label === "Access & security" ? "page" : undefined}
+              aria-current={label === "Security" ? "page" : undefined}
               onClick={() => {
-                if (label !== "Access & security") {
-                  setDialog({ kind: "info", title: label, content: "This preview implements Access & Security Manager." });
+                if (label !== "Security") {
+                  setDialog({ kind: "info", title: label, content: "This preview is the Access and Security Manager split view." });
                 }
               }}
             >
@@ -487,10 +487,13 @@ export default function ProposalThreeApp() {
               {tab === "users" ? (
                 <>
                   <UserGroup title="Administrators" users={administrators} selectedId={selectedUserId} onSelect={selectUser} sortName={sortName} onSort={() => setSortName((value) => !value)} />
-                  <button className="primary-button p3-add" type="button" onClick={() => { setFormError(""); setDialog({ kind: "add" }); }}>
+                  <button className="p3-fill" type="button" onClick={() => { setFormError(""); setDialog({ kind: "add", role: "Admin" }); }}>
+                    Add an administrator
+                  </button>
+                  <UserGroup title="Users" users={team} selectedId={selectedUserId} onSelect={selectUser} />
+                  <button className="p3-fill" type="button" onClick={() => { setFormError(""); setDialog({ kind: "add", role: "Money Mover" }); }}>
                     Add a user
                   </button>
-                  <UserGroup title="Team" users={team} selectedId={selectedUserId} onSelect={selectUser} />
                   {visibleUsers.length === 0 && <p className="p3-empty">No users match that search.</p>}
                 </>
               ) : companyRows.length === 0 ? (
@@ -622,7 +625,7 @@ export default function ProposalThreeApp() {
                 })}
               </div>
               {!editingUser && (
-                <div className="p3-card-footer">
+                <div className="p3-card-footer p3-footer-split">
                   <div className="p3-solid">
                     <button type="button" className="p3-solid-trigger" aria-expanded={manageOpen} aria-haspopup="menu" onClick={() => setManageOpen((open) => !open)}>
                       <span>Manage user</span>
@@ -636,6 +639,16 @@ export default function ProposalThreeApp() {
                       </div>
                     )}
                   </div>
+                  <button
+                    className="p3-fill"
+                    type="button"
+                    onClick={() => {
+                      const index = companiesFor(selectedUser)[0];
+                      if (index !== undefined) selectCompany(index);
+                    }}
+                  >
+                    Assign user rights
+                  </button>
                 </div>
               )}
             </section>
@@ -666,13 +679,10 @@ export default function ProposalThreeApp() {
           )}
 
           {showRightsPanel && selectedUser && selectedCompany !== null && rights && (
-            <section className="p3-panel p3-panel-rights p3-panel-enter" aria-label={`${coffeeCompanies[selectedCompany].location} permissions`}>
+            <section className="p3-panel p3-panel-rights p3-panel-enter" aria-label={`${coffeeCompanies[selectedCompany].location} accounts`}>
               <div className="p3-block">
                 <div className="p3-profile-top">
-                  <div>
-                    <h2 className="p3-profile-name">{coffeeCompanies[selectedCompany].location}</h2>
-                    <p className="p3-meta">{selectedUser.name} · {selectedUser.role}</p>
-                  </div>
+                  <h2 className="p3-profile-name">{coffeeCompanies[selectedCompany].location}</h2>
                   {account && (
                     editingRights ? (
                       <button className="p3-edit" type="button" onClick={saveRights}>Save</button>
@@ -684,84 +694,83 @@ export default function ProposalThreeApp() {
                     )
                   )}
                 </div>
+                <p className="p3-kicker">Open accounts</p>
+                <p className="p3-meta">See, upload, and download account opening documents</p>
                 {error && <p className="p3-feedback" role="alert">{error}</p>}
-                {visibleAccounts.length === 0 ? (
+                {visibleAccounts.length === 0 && (
                   <p className="p3-empty">This role has no accounts at {coffeeCompanies[selectedCompany].location}.</p>
-                ) : (
-                  <div className="p3-fields">
-                    <SolidSelect
-                      label="Account"
-                      value={account?.id ?? ""}
-                      options={visibleAccounts.map((row) => ({ id: row.id, label: formatAccountLabel(row, selectedUser.id) }))}
-                      onChange={setAccountId}
-                    />
-                  </div>
                 )}
               </div>
-              {account && (
-                <div className="p3-scroll">
-                  <div className="p3-section">
-                          <label className="p3-option">
-                            <input
-                              type="checkbox"
-                              checked={accountChecked(account)}
-                              onClick={(event) => {
-                                if (!editingRights) event.preventDefault();
-                              }}
-                              onChange={(event) => {
-                                if (!editingRights) return;
-                                setRights({ ...rights, accounts: { ...rights.accounts, [account.id]: event.target.checked } });
-                              }}
-                            />
-                            Can use this account
-                          </label>
-                  </div>
-                  {sectionsFor(account.product).map((section) => (
-                    <div className="p3-section" key={section.title}>
-                      <h3>{section.title}</h3>
-                      {section.names.map((name) => (
-                        <div className="p3-right-row" key={name}>
-                          <label className="p3-option">
-                            <input
-                              type="checkbox"
-                              checked={Boolean(rights.allowed[name])}
-                              onClick={(event) => {
-                                if (!editingRights) event.preventDefault();
-                              }}
-                              onChange={(event) => {
-                                if (!editingRights) return;
-                                setRights({ ...rights, allowed: { ...rights.allowed, [name]: event.target.checked } });
-                              }}
-                            />
-                            {name}
-                          </label>
-                          {paymentTypes.includes(name) && (
-                            editingRights ? (
-                              <label className="p3-limit">
-                                Daily limit
-                                <input
-                                  inputMode="decimal"
-                                  aria-label={`${name} daily limit`}
-                                  value={rights.limits[name] ?? ""}
-                                  onChange={(event) => setRights({ ...rights, limits: { ...rights.limits, [name]: event.target.value } })}
-                                />
-                              </label>
+              <div className="p3-scroll">
+                {visibleAccounts.map((row) => {
+                  const open = row.id === account?.id;
+                  return (
+                    <div className="p3-account" key={row.id}>
+                      <button type="button" className="p3-account-toggle" aria-expanded={open} onClick={() => setAccountId(row.id)}>
+                        <Chevron direction={open ? "down" : "right"} />
+                        <span>{formatAccountLabel(row, selectedUser.id)}</span>
+                      </button>
+                      {open && (
+                        <div className="p3-account-body">
+                          <label className="p3-line">
+                            <span>Can use this account</span>
+                            {editingRights ? (
+                              <input
+                                type="checkbox"
+                                checked={accountChecked(row)}
+                                onChange={(event) => setRights({ ...rights, accounts: { ...rights.accounts, [row.id]: event.target.checked } })}
+                              />
                             ) : (
-                              <p className="p3-limit">{money(rights.limits[name] ?? "0")}</p>
-                            )
-                          )}
+                              <span className="p3-state">{accountChecked(row) ? "Enabled" : "Off"}</span>
+                            )}
+                          </label>
+                          {sectionsFor(row.product).map((section) => (
+                            <div className="p3-section" key={section.title}>
+                              <h3>{section.title}</h3>
+                              {section.names.map((name) => {
+                                const on = Boolean(rights.allowed[name]);
+                                const isPayment = paymentTypes.includes(name);
+                                return (
+                                  <div className="p3-line" key={name}>
+                                    <span>{name}</span>
+                                    {editingRights ? (
+                                      <span className="p3-line-edit">
+                                        <input
+                                          type="checkbox"
+                                          checked={on}
+                                          aria-label={name}
+                                          onChange={(event) => setRights({ ...rights, allowed: { ...rights.allowed, [name]: event.target.checked } })}
+                                        />
+                                        {isPayment && (
+                                          <input
+                                            className="p3-limit-input"
+                                            inputMode="decimal"
+                                            aria-label={`${name} daily limit`}
+                                            value={rights.limits[name] ?? ""}
+                                            onChange={(event) => setRights({ ...rights, limits: { ...rights.limits, [name]: event.target.value } })}
+                                          />
+                                        )}
+                                      </span>
+                                    ) : (
+                                      <span className="p3-state">{isPayment ? (on ? money(rights.limits[name] ?? "0") : "Off") : on ? "Enabled" : "Off"}</span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
+                  );
+                })}
+              </div>
               {editingRights && (
                 <div className="p3-actions">
                   <button className="p3-ghost" type="button" onClick={() => { setEditingRights(false); setRights(readStoredPermissions(selectedUser)); setError(""); }}>
                     Cancel
                   </button>
-                  <button className="primary-button" type="button" onClick={saveRights}>Save changes</button>
+                  <button className="p3-fill p3-fill-auto" type="button" onClick={saveRights}>Save</button>
                 </div>
               )}
             </section>
@@ -780,7 +789,7 @@ export default function ProposalThreeApp() {
               <label>Email address<input name="email" type="email" required maxLength={160} /></label>
               <label>
                 Role
-                <select name="role" defaultValue={businessRoles[0]}>
+                <select name="role" defaultValue={dialog.kind === "add" ? dialog.role : businessRoles[0]}>
                   {businessRoles.map((role) => (
                     <option key={role}>{role}</option>
                   ))}
