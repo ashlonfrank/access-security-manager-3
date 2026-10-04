@@ -719,15 +719,20 @@ export default function ProposalThreeApp() {
               {account && (
                 <div className="p3-scroll">
                   <div className="p3-section">
-                    <label className="p3-option">
-                      <input
-                        type="checkbox"
-                        checked={accountChecked(account)}
-                        disabled={!editingRights}
-                        onChange={(event) => setRights({ ...rights, accounts: { ...rights.accounts, [account.id]: event.target.checked } })}
-                      />
-                      Can use this account
-                    </label>
+                          <label className="p3-option">
+                            <input
+                              type="checkbox"
+                              checked={accountChecked(account)}
+                              onClick={(event) => {
+                                if (!editingRights) event.preventDefault();
+                              }}
+                              onChange={(event) => {
+                                if (!editingRights) return;
+                                setRights({ ...rights, accounts: { ...rights.accounts, [account.id]: event.target.checked } });
+                              }}
+                            />
+                            Can use this account
+                          </label>
                   </div>
                   {sectionsFor(account.product).map((section) => (
                     <div className="p3-section" key={section.title}>
@@ -738,8 +743,13 @@ export default function ProposalThreeApp() {
                             <input
                               type="checkbox"
                               checked={Boolean(rights.allowed[name])}
-                              disabled={!editingRights}
-                              onChange={(event) => setRights({ ...rights, allowed: { ...rights.allowed, [name]: event.target.checked } })}
+                              onClick={(event) => {
+                                if (!editingRights) event.preventDefault();
+                              }}
+                              onChange={(event) => {
+                                if (!editingRights) return;
+                                setRights({ ...rights, allowed: { ...rights.allowed, [name]: event.target.checked } });
+                              }}
                             />
                             {name}
                           </label>
