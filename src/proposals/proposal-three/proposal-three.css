@@ -19,10 +19,12 @@
 }
 
 .proposal-three main.p3-main {
+  width: 100%;
   max-width: none;
   margin: 0;
   padding: 20px 28px 40px;
   background: #e7edf2;
+  box-sizing: border-box;
 }
 
 .p3-titlebar {
@@ -101,20 +103,21 @@
   display: flex;
   align-items: flex-start;
   gap: 16px;
+  width: 100%;
 }
 
 .p3-panel {
   display: flex;
   flex-direction: column;
-  width: 320px;
-  flex: 0 0 320px;
+  width: auto;
+  flex: 1 1 0;
+  min-width: 260px;
   overflow: visible;
   background: #e2e8f0;
   padding: 8px;
   border: 1px solid #d5dde5;
   border-radius: 8px;
   box-shadow: 0 1px 2px #002f6c0a;
-  min-width: 0;
 }
 
 .p3-panel.permissions-panel {
@@ -123,14 +126,15 @@
 }
 
 .p3-panel-person {
-  flex-basis: 300px;
-  width: 300px;
+  flex: 1 1 0;
+  width: auto;
+  min-width: 240px;
 }
 
 .p3-panel-rights {
-  flex: 0 0 420px;
-  width: 420px;
-  min-width: 0;
+  flex: 1.35 1 0;
+  width: auto;
+  min-width: 320px;
 }
 
 .p3-email {
@@ -212,6 +216,8 @@
   padding: 0;
   background: #fff;
   border-radius: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #e6ebf0 transparent;
 }
 
 .p3-group {
@@ -261,8 +267,18 @@
 }
 
 .p3-list-action {
-  padding: 16px;
+  display: flex;
+  justify-content: flex-start;
+  padding: 16px 16px 20px;
+  border-top: 0;
+}
+
+.p3-list-action + .p3-group {
   border-top: 1px solid #d5dde5;
+}
+
+.p3-list-action + .p3-group .p3-group-head {
+  padding-top: 24px;
 }
 
 .p3-group-head {
@@ -801,8 +817,9 @@
   left: auto;
   right: auto;
   bottom: auto;
-  width: 420px;
-  flex: 0 0 420px;
+  width: auto;
+  flex: 1.35 1 0;
+  min-width: 320px;
   height: auto;
   max-height: min(760px, calc(100vh - 180px));
   z-index: 1;
@@ -910,4 +927,46 @@
   .p3-panel-enter {
     animation: none;
   }
+}
+
+/* A thumb only, half a normal bar, with no track. */
+html:has(.proposal-three),
+.proposal-three .permissions-scroll,
+.proposal-three .p3-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #e6ebf0 transparent;
+}
+
+html:has(.proposal-three)::-webkit-scrollbar,
+.proposal-three .permissions-scroll::-webkit-scrollbar,
+.proposal-three .p3-scroll::-webkit-scrollbar {
+  display: block;
+  width: 6px;
+  height: 6px;
+  background: transparent;
+}
+
+html:has(.proposal-three)::-webkit-scrollbar-track,
+.proposal-three .permissions-scroll::-webkit-scrollbar-track,
+.proposal-three .p3-scroll::-webkit-scrollbar-track,
+html:has(.proposal-three)::-webkit-scrollbar-corner,
+.proposal-three .permissions-scroll::-webkit-scrollbar-corner,
+.proposal-three .p3-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+html:has(.proposal-three)::-webkit-scrollbar-thumb,
+.proposal-three .permissions-scroll::-webkit-scrollbar-thumb,
+.proposal-three .p3-scroll::-webkit-scrollbar-thumb {
+  background: #e6ebf0;
+  border: 0;
+  border-radius: 999px;
+}
+
+html:has(.proposal-three)::-webkit-scrollbar-button,
+.proposal-three .permissions-scroll::-webkit-scrollbar-button,
+.proposal-three .p3-scroll::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
