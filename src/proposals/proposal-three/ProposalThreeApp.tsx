@@ -8,23 +8,16 @@ import { normalizeDemoPersonas } from "../../demoPersonas";
 import { ensureDefaultPendingApproval } from "../../pendingApprovals";
 import PermissionsPanel from "../../PermissionsPanel";
 import {
-  EditorContext,
-  PermissionAccountsEditor,
-  PermissionCategoriesEditor,
-} from "../../permissionUi";
-import {
   businessRoles,
   coffeeCompanies,
   companyIndex,
   normalizeRole,
   statusClass,
 } from "../../business";
-import { accountsForCompany, seedAccountAccess } from "../../demoAccounts";
+import { accountsForCompany } from "../../demoAccounts";
 import {
   permissionsStorageKey,
   readStoredPermissions,
-  seedPermissionsForUser,
-  type Permissions,
 } from "../../userPermissions";
 import type { User } from "../../App";
 import "./proposal-three.css";
@@ -52,30 +45,10 @@ function Chevron({ direction = "right" }: { direction?: "right" | "down" }) {
   );
 }
 
-function CompanyEntitlements({ index }: { index: number }) {
-  const userId = `company-${index}`;
-  const [value, setValue] = useState<Permissions>(() => {
-    const seeded = seedPermissionsForUser({ id: userId, role: "Admin" });
-    return { ...seeded, accounts: seedAccountAccess(userId, "Admin", seeded, index) };
-  });
-  useEffect(() => {
-    const seeded = seedPermissionsForUser({ id: userId, role: "Admin" });
-    setValue({ ...seeded, accounts: seedAccountAccess(userId, "Admin", seeded, index) });
-  }, [index, userId]);
-  const company = coffeeCompanies[index];
-  return (
-    <EditorContext.Provider value={{ editing: false, value, setValue, userId, role: "Admin", companyIndex: index }}>
-      <section className="p3-panel p3-panel-rights p3-panel-enter permissions-panel permissions-panel-embedded" aria-label={`${company.location} accounts`}>
-        <div className="permissions-scroll">
-          <div className="p3-block">
-            <h2 className="p3-profile-name">{company.location}</h2>
-            <p className="p3-meta">{company.name}</p>
-          </div>
-          <PermissionCategoriesEditor />
-          <PermissionAccountsEditor />
-        </div>
-      </section>
-    </EditorContext.Provider>
+function permissionsIncludeCompany(user: User, companyIdx: number): boolean {
+  const stored = readStoredPermissions(user);
+  return accountsForCompany(companyIdx).some((account) =>
+    Object.prototype.hasOwnProperty.call(stored.accounts, account.id),
   );
 }
 
@@ -163,6 +136,12 @@ export default function ProposalThreeApp() {
   const companyRows = coffeeCompanies
     .map((company, index) => ({ company, index, label: `${company.name} · ${company.location}` }))
     .filter((row) => row.label.toLowerCase().includes(needle));
+  const companyPeople = useMemo(() => {
+    if (selectedCompany === null) return [];
+    return users
+      .filter((user) => user.status !== "Removed" && permissionsIncludeCompany(user, selectedCompany))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [users, selectedCompany]);
 
   function activateTab(next: "users" | "companies") {
     setTab(next);
@@ -191,8 +170,13 @@ export default function ProposalThreeApp() {
   }
 
   function selectCompany(index: number) {
+    if (tab === "companies" && index !== selectedCompany) setSelectedUserId(null);
     setSelectedCompany(index);
-    if (tab === "companies") setSelectedUserId(null);
+  }
+
+  function closeCompanyPeople() {
+    setSelectedCompany(null);
+    setSelectedUserId(null);
   }
 
   function persistUser(next: User) {
@@ -298,24 +282,6 @@ export default function ProposalThreeApp() {
       <main id="proposal-three-main" className="p3-main">
         <div className="p3-titlebar">
           <p className="p3-page-title">Access and Security Manager</p>
-          <div className="p3-subnav" aria-label="Access and security sections">
-            <button type="button" className="p3-chip" aria-current="page">All users</button>
-            {["Account activity", "Chase Dual Control", "IP Security", "Demos and user guides"].map((label) => (
-              <button key={label} type="button" onClick={() => setNotice("This preview covers All users.")}>
-                {label}
-              </button>
-            ))}
-          </div>
-          <label className="p3-title-search">
-            <span className="visually-hidden">Search</span>
-            <input
-              ref={searchRef}
-              id="p3-search"
-              value={query}
-              placeholder={tab === "users" ? "Search users" : "Search companies"}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </label>
         </div>
         {notice && <p className="p3-notice">{notice}</p>}
         <div className="p3-manage">
@@ -346,6 +312,16 @@ export default function ProposalThreeApp() {
               companies
             </button>
           </div>
+          <label className="p3-title-search">
+            <span className="visually-hidden">Search</span>
+            <input
+              ref={searchRef}
+              id="p3-search"
+              value={query}
+              placeholder={tab === "users" ? "Search users" : "Search companies"}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </label>
         </div>
         <div className="p3-stage">
           <section
@@ -359,13 +335,13 @@ export default function ProposalThreeApp() {
                 <>
                   <UserGroup title="Administrators" users={administrators} selectedId={selectedUserId} onSelect={selectUser} sortName={sortName} onSort={() => setSortName((value) => !value)} />
                   <div className="p3-list-action">
-                    <button className="p3-menu-trigger" type="button" onClick={() => { setFormError(""); setDialog({ kind: "add", role: "Admin" }); }}>
+                    <button className="p3-fill" type="button" onClick={() => { setFormError(""); setDialog({ kind: "add", role: "Admin" }); }}>
                       Add an admin
                     </button>
                   </div>
                   <UserGroup title="Users" users={team} selectedId={selectedUserId} onSelect={selectUser} />
                   <div className="p3-list-action">
-                    <button className="p3-menu-trigger" type="button" onClick={() => { setFormError(""); setDialog({ kind: "add", role: "Money Mover" }); }}>
+                    <button className="p3-fill" type="button" onClick={() => { setFormError(""); setDialog({ kind: "add", role: "Money Mover" }); }}>
                       Add a user
                     </button>
                   </div>
@@ -432,7 +408,53 @@ export default function ProposalThreeApp() {
             />
           )}
 
-          {tab === "companies" && selectedCompany !== null && <CompanyEntitlements index={selectedCompany} />}
+          {tab === "companies" && selectedCompany !== null && (
+            <section className="p3-panel p3-panel-person p3-panel-enter" aria-label="People">
+              <div className="p3-scroll">
+                <div className="p3-panel-title">
+                  <h2>People</h2>
+                  <button type="button" className="p3-close" aria-label="Close people" onClick={closeCompanyPeople} />
+                </div>
+                {companyPeople.length === 0 ? (
+                  <p className="p3-empty">No people at this company.</p>
+                ) : (
+                  companyPeople.map((user) => (
+                    <button
+                      type="button"
+                      className="p3-person"
+                      key={user.id}
+                      aria-checked={user.id === selectedUserId}
+                      onClick={() => selectUser(user)}
+                    >
+                      <Avatar user={user} />
+                      <span className="p3-person-copy">
+                        <span className="p3-person-name">{user.name}</span>
+                        <span className="p3-meta">
+                          <span className={`tag status-tag ${statusClass(user.status)}`}>{user.status}</span>
+                          {" · "}
+                          {user.role}
+                        </span>
+                      </span>
+                      <span className="p3-radio" />
+                    </button>
+                  ))
+                )}
+              </div>
+            </section>
+          )}
+
+          {tab === "companies" && selectedCompany !== null && selectedUser && (
+            <PermissionsPanel
+              key={`${selectedUser.id}:${selectedCompany}`}
+              embedded
+              companyContext={selectedCompany}
+              user={selectedUser}
+              onClose={() => setSelectedUserId(null)}
+              emailInUse={(email) => users.some((row) => row.id !== selectedUser.id && row.email.toLowerCase() === email)}
+              onDelete={() => setDialog({ kind: "delete", user: selectedUser })}
+              onUpdate={(patch) => persistUser({ ...selectedUser, ...patch })}
+            />
+          )}
         </div>
       </main>
       {dialog && (
