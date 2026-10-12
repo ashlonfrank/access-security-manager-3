@@ -40,103 +40,70 @@ function StateIcon({ on, label }: { on: boolean; label: string }) {
 export function PermissionItem({
   text,
   limit = false,
-  approval = false,
 }: {
   text: string;
   limit?: boolean;
-  approval?: boolean;
 }) {
   const ctx = useContext(EditorContext);
   if (!ctx) return null;
   const { editing, value, setValue } = ctx;
   const allowed = value.allowed[text] ?? false;
-  const needsApproval = value.approvals?.[text] ?? false;
   return (
-    <>
-      <li className={`permission-item ${limit && allowed ? "with-limit" : ""}`}>
-        {editing ? (
-          <input
-            type="checkbox"
-            className="permission-checkbox"
-            aria-label={text}
-            checked={allowed}
-            onChange={(event) => {
-              const on = event.target.checked;
-              setValue((previous) => ({
-                ...previous,
-                allowed: { ...previous.allowed, [text]: on },
-                limits:
-                  limit && on
-                    ? { ...previous.limits, [text]: defaultDailyLimit }
-                    : previous.limits,
-                approvals:
-                  approval && on
-                    ? { ...previous.approvals, [text]: false }
-                    : previous.approvals,
-              }));
-            }}
-          />
-        ) : (
-          <StateIcon on={allowed} label={allowed ? "Allowed" : "Not allowed"} />
-        )}
-        <span>{text}</span>
-        {limit && allowed && (
-          <>
-            <span className="daily-limit">Daily limit</span>
-            {editing ? (
-              <input
-                className="limit-input"
-                type="number"
-                min="0"
-                max="999999999"
-                step="0.01"
-                inputMode="decimal"
-                required
-                aria-label={`${text} daily limit`}
-                value={value.limits[text] ?? defaultDailyLimit}
-                onChange={(event) =>
-                  setValue((previous) => ({
-                    ...previous,
-                    limits: { ...previous.limits, [text]: event.target.value },
-                  }))
-                }
-              />
-            ) : (
-              <span className="limit-value">
-                {new Intl.NumberFormat("en-US", {
-                  style: "currency",
-                  currency: "USD",
-                }).format(Number(value.limits[text] ?? defaultDailyLimit))}
-              </span>
-            )}
-          </>
-        )}
-      </li>
-      {approval && allowed && (
-        <li className="permission-item">
+    <li className={`permission-item ${limit && allowed ? "with-limit" : ""}`}>
+      {editing ? (
+        <input
+          type="checkbox"
+          className="permission-checkbox"
+          aria-label={text}
+          checked={allowed}
+          onChange={(event) => {
+            const on = event.target.checked;
+            setValue((previous) => ({
+              ...previous,
+              allowed: { ...previous.allowed, [text]: on },
+              limits:
+                limit && on
+                  ? { ...previous.limits, [text]: defaultDailyLimit }
+                  : previous.limits,
+            }));
+          }}
+        />
+      ) : (
+        <StateIcon on={allowed} label={allowed ? "Allowed" : "Not allowed"} />
+      )}
+      <span>{text}</span>
+      {limit && allowed && (
+        <>
+          <span className="daily-limit">Daily limit</span>
           {editing ? (
             <input
-              type="checkbox"
-              className="permission-checkbox"
-              aria-label={`${text} requires approval`}
-              checked={needsApproval}
+              className="limit-input"
+              type="number"
+              min="0"
+              max="999999999"
+              step="0.01"
+              inputMode="decimal"
+              required
+              aria-label={`${text} daily limit`}
+              value={value.limits[text] ?? defaultDailyLimit}
               onChange={(event) =>
                 setValue((previous) => ({
                   ...previous,
-                  approvals: { ...previous.approvals, [text]: event.target.checked },
+                  limits: { ...previous.limits, [text]: event.target.value },
                 }))
               }
             />
           ) : (
-            <StateIcon
-              on={needsApproval}
-              label={needsApproval ? `${text} requires approval` : `${text} does not require approval`}
-            />
+            <span className="limit-value">
+              {new Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: "USD",
+              }).format(Number(value.limits[text] ?? defaultDailyLimit))}
+            </span>
           )}
-          <span>Requires approval</span>
-        </li>
+        </>
       )}
-    </>
+    </li>
   );
 }
 
@@ -186,7 +153,7 @@ export function PermissionCategoriesEditor() {
         </PermissionCategory>
         <PermissionCategory title="Money Movement" icon={assets.imgIcon2}>
           {moneyMovementTypes.map((text) => (
-            <PermissionItem key={text} text={text} limit approval />
+            <PermissionItem key={text} text={text} limit />
           ))}
         </PermissionCategory>
         <PermissionCategory title="Credit Cards" icon={assets.imgIcon4}>

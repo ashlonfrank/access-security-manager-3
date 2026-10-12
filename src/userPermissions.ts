@@ -41,8 +41,6 @@ export const defaultDailyLimit = "50000.00";
 export type Permissions = {
   allowed: Record<string, boolean>;
   limits: Record<string, string>;
-  /** Per money-movement permission. Off unless explicitly turned on. */
-  approvals: Record<string, boolean>;
   mfa: boolean;
   token: "Soft token" | "Hard token" | "No token";
   accounts: Record<string, boolean>;
@@ -114,7 +112,6 @@ export function permissionsForRole(role: string): Omit<Permissions, "accounts"> 
       permissionNames.map((name) => [name, enabled.has(name)]),
     ),
     limits: Object.fromEntries(moneyMovementTypes.map((name) => [name, defaultDailyLimit])),
-    approvals: Object.fromEntries(moneyMovementTypes.map((name) => [name, false])),
     mfa: true,
     token: "Soft token",
   };
@@ -144,7 +141,6 @@ function isValidAccountMap(
 
 type StoredPermissionsBlob = Omit<Permissions, "accounts"> & {
   accounts: Permissions["accounts"] | boolean[];
-  approvals?: Permissions["approvals"];
 };
 
 function isValidSavedPermissions(saved: unknown): saved is StoredPermissionsBlob {
@@ -160,8 +156,7 @@ function isValidSavedPermissions(saved: unknown): saved is StoredPermissionsBlob
       (name) =>
         typeof blob.limits?.[name] === "string" &&
         Number.isFinite(Number(blob.limits[name])) &&
-        Number(blob.limits[name]) >= 0 &&
-        typeof blob.approvals?.[name] === "boolean",
+        Number(blob.limits[name]) >= 0,
     ) &&
     (isValidAccountMap(blob.accounts) ||
       (Array.isArray(blob.accounts) &&
@@ -187,7 +182,10 @@ export function readStoredPermissions(user: PermissionUser): Permissions {
         )
       : saved.accounts;
 
-    return { ...saved, accounts };
+    const { approvals: _approvals, ...rest } = saved as StoredPermissionsBlob & {
+      approvals?: unknown;
+    };
+    return { ...rest, accounts };
   } catch {
     return fallback;
   }
