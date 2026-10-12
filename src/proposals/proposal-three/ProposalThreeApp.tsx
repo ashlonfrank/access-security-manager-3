@@ -331,7 +331,7 @@ export default function ProposalThreeApp() {
               onClick={() => activateTab("users")}
               onKeyDown={onManageTabKey}
             >
-              Users
+              users
             </button>
             <button
               type="button"
@@ -343,7 +343,7 @@ export default function ProposalThreeApp() {
               onClick={() => activateTab("companies")}
               onKeyDown={onManageTabKey}
             >
-              Companies
+              companies
             </button>
           </div>
         </div>
