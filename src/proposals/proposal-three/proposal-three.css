@@ -264,8 +264,17 @@
 .p3-list-action {
   display: flex;
   justify-content: flex-start;
-  padding: 16px 16px 20px;
+  /* 16px matches .p3-person horizontal padding, so the button's left edge
+     sits on the same inset as the avatar. */
+  padding: 16px 16px 20px 16px;
   border-top: 0;
+}
+
+.p3-list-action > .p3-menu-trigger,
+.p3-list-action > .p3-fill {
+  margin-left: 0;
+  margin-right: auto;
+  align-self: flex-start;
 }
 
 .p3-list-action + .p3-group {

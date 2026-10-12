@@ -360,7 +360,7 @@ export default function ProposalThreeApp() {
                   <UserGroup title="Administrators" users={administrators} selectedId={selectedUserId} onSelect={selectUser} sortName={sortName} onSort={() => setSortName((value) => !value)} />
                   <div className="p3-list-action">
                     <button className="p3-menu-trigger" type="button" onClick={() => { setFormError(""); setDialog({ kind: "add", role: "Admin" }); }}>
-                      Add an administrator
+                      Add an admin
                     </button>
                   </div>
                   <UserGroup title="Users" users={team} selectedId={selectedUserId} onSelect={selectUser} />
