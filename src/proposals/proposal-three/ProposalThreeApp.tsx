@@ -137,7 +137,6 @@ export default function ProposalThreeApp() {
     | null
   >(null);
   const [formError, setFormError] = useState("");
-  const [manageOpen, setManageOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -169,7 +168,6 @@ export default function ProposalThreeApp() {
     setTab(next);
     setSelectedCompany(null);
     setSelectedUserId(null);
-    setManageOpen(false);
   }
 
   function onManageTabKey(event: KeyboardEvent<HTMLButtonElement>) {
@@ -184,8 +182,12 @@ export default function ProposalThreeApp() {
 
   function selectUser(user: User) {
     setSelectedUserId(user.id);
-    setManageOpen(false);
     if (tab === "users") setSelectedCompany(null);
+  }
+
+  function closeCompanies() {
+    setSelectedUserId(null);
+    setSelectedCompany(null);
   }
 
   function selectCompany(index: number) {
@@ -356,13 +358,17 @@ export default function ProposalThreeApp() {
               {tab === "users" ? (
                 <>
                   <UserGroup title="Administrators" users={administrators} selectedId={selectedUserId} onSelect={selectUser} sortName={sortName} onSort={() => setSortName((value) => !value)} />
-                  <button className="p3-fill" type="button" onClick={() => { setFormError(""); setDialog({ kind: "add", role: "Admin" }); }}>
-                    Add an administrator
-                  </button>
+                  <div className="p3-list-action">
+                    <button className="p3-menu-trigger" type="button" onClick={() => { setFormError(""); setDialog({ kind: "add", role: "Admin" }); }}>
+                      Add an administrator
+                    </button>
+                  </div>
                   <UserGroup title="Users" users={team} selectedId={selectedUserId} onSelect={selectUser} />
-                  <button className="p3-fill" type="button" onClick={() => { setFormError(""); setDialog({ kind: "add", role: "Money Mover" }); }}>
-                    Add a user
-                  </button>
+                  <div className="p3-list-action">
+                    <button className="p3-menu-trigger" type="button" onClick={() => { setFormError(""); setDialog({ kind: "add", role: "Money Mover" }); }}>
+                      Add a user
+                    </button>
+                  </div>
                   {visibleUsers.length === 0 && <p className="p3-empty">No users match that search.</p>}
                 </>
               ) : companyRows.length === 0 ? (
@@ -390,17 +396,12 @@ export default function ProposalThreeApp() {
           </section>
 
           {tab === "users" && selectedUser && (
-            <section className="p3-panel p3-panel-person p3-panel-enter" aria-label={`${selectedUser.name} companies`}>
-              <div className="p3-block">
-                <h2 className="p3-profile-name">{selectedUser.name}</h2>
-                <p className="p3-meta">
-                  <span className={`tag status-tag ${statusClass(selectedUser.status)}`}>{selectedUser.status}</span>
-                  {" · "}
-                  {selectedUser.role}
-                </p>
-                <p className="p3-meta p3-email">{selectedUser.email}</p>
-              </div>
+            <section className="p3-panel p3-panel-person p3-panel-enter" aria-label="Companies">
               <div className="p3-scroll">
+                <div className="p3-panel-title">
+                  <h2>Companies</h2>
+                  <button type="button" className="p3-close" aria-label="Close companies" onClick={closeCompanies} />
+                </div>
                 {companiesFor(selectedUser).map((index) => {
                   const entitled = visibleAccountsForUser(
                     selectedUser.id,
@@ -418,31 +419,6 @@ export default function ProposalThreeApp() {
                     </button>
                   );
                 })}
-              </div>
-              <div className="p3-card-footer p3-footer-split">
-                <div className="p3-solid">
-                  <button type="button" className="p3-menu-trigger" aria-expanded={manageOpen} aria-haspopup="menu" onClick={() => setManageOpen((open) => !open)}>
-                    <span>Manage user</span>
-                    <Chevron direction="down" />
-                  </button>
-                  {manageOpen && (
-                    <div className="p3-solid-menu" role="menu">
-                      <button type="button" role="menuitem" onClick={() => { setManageOpen(false); setDialog({ kind: "delete", user: selectedUser }); }}>
-                        Remove user
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <button
-                  className="p3-fill"
-                  type="button"
-                  onClick={() => {
-                    const index = companiesFor(selectedUser)[0];
-                    if (index !== undefined) selectCompany(index);
-                  }}
-                >
-                  Assign user rights
-                </button>
               </div>
             </section>
           )}
@@ -526,9 +502,14 @@ function UserGroup({
       <div className="p3-group-head">
         <h2>{title}</h2>
         {onSort && (
-          <button className="p3-sort" type="button" onClick={onSort}>
-            Sort by: {sortName ? "Name" : "Name, reversed"}
-            <Chevron direction="down" />
+          <button
+            className="p3-sort"
+            type="button"
+            onClick={onSort}
+            aria-label={`Sort by name ${sortName ? "Z to A" : "A to Z"}`}
+          >
+            Sort by: Name
+            <span aria-hidden="true" className={`sort-chevron${sortName ? " ascending" : ""}`} />
           </button>
         )}
       </div>
