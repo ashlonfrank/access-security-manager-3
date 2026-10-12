@@ -278,8 +278,15 @@
 .p3-section-title {
   margin: 0;
   font-size: 14px;
-  font-weight: 600;
   line-height: 1.5;
+}
+
+.p3-group-head h2 {
+  font-weight: 500;
+}
+
+.p3-section-title {
+  font-weight: 600;
 }
 
 .p3-sort {
