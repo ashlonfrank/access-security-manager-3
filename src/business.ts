@@ -1,12 +1,22 @@
-export const businessRoles = ["Admin", "Business Partner", "Accountant", "CFO", "Finance Lead", "Money Mover", "Read Only"];
+export const businessRoles = [
+  "Admin",
+  "CFO",
+  "Business Partner",
+  "Finance Lead",
+  "Money Mover",
+  "Accountant",
+  "Read Only",
+  "Custom",
+];
 export const roleDescriptions: Record<string, string> = {
-  Admin: "Full control including policies, accounts, and settings",
-  "Business Partner": "Shares oversight of business finances, accounts, and banking activity",
-  Accountant: "Can view all accounts and transactions, and manage books",
-  CFO: "Full non-admin access to accounts, payments, cards, and users",
-  "Finance Lead": "Manages bookkeeping, transaction coding, ACH processing, and ledger integrations",
-  "Money Mover": "Can initiate payments and transfers, and manage recipients on selected accounts",
-  "Read Only": "Can view all accounts and transactions, and be issued cards",
+  Admin: "Full access to manage business accounts, payments, and users.",
+  CFO: "Full access to financial accounts, payments, and reporting.",
+  "Business Partner": "Can access business accounts, cards, and payment processing services.",
+  "Finance Lead": "Can manage day-to-day finances, payments, and payroll.",
+  "Money Mover": "Can make payments and transfers from authorized accounts.",
+  Accountant: "Can view financial information, deposit checks, and manage cash flow.",
+  "Read Only": "Can view accounts and transactions and can be issued cards.",
+  Custom: "Choose specific permissions and account access based on the employee’s responsibilities.",
 };
 export function normalizeRole(role: string) {
   if (businessRoles.includes(role)) return role;

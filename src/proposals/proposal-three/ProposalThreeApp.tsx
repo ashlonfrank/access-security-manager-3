@@ -19,7 +19,7 @@ import {
   normalizeRole,
   statusClass,
 } from "../../business";
-import { seedAccountAccess, visibleAccountsForUser } from "../../demoAccounts";
+import { accountsForCompany, seedAccountAccess } from "../../demoAccounts";
 import {
   permissionsStorageKey,
   readStoredPermissions,
@@ -403,12 +403,8 @@ export default function ProposalThreeApp() {
                   <button type="button" className="p3-close" aria-label="Close companies" onClick={closeCompanies} />
                 </div>
                 {companiesFor(selectedUser).map((index) => {
-                  const entitled = visibleAccountsForUser(
-                    selectedUser.id,
-                    selectedUser.role,
-                    readStoredPermissions(selectedUser),
-                    index,
-                  ).length;
+                  const stored = readStoredPermissions(selectedUser);
+                  const entitled = accountsForCompany(index).filter((account) => stored.accounts[account.id]).length;
                   return (
                     <button type="button" className="p3-company" key={index} aria-current={selectedCompany === index} onClick={() => selectCompany(index)}>
                       <span className="p3-company-copy">

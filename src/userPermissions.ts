@@ -1,33 +1,48 @@
+import { coffeeCompanies } from "./business";
 import {
   migrateLegacyAccountBooleans,
   seedAccountAccess,
 } from "./demoAccounts";
 
-export const paymentTypes = [
+export const statementTypes = [
+  "See activity and balances",
+  "See check images",
+  "See statements and documents",
+  "Download statements and documents",
+];
+export const moneyMovementTypes = [
+  "Chase QuickDeposit",
   "ACH payments",
   "ACH vendor payments",
   "Bill pay",
   "CashFlow 360",
   "Transfers and payments",
   "Wires",
+  "Zelle",
+  "Payroll",
 ];
-export const statementTypes = [
-  "See activity and balances",
-  "See check images",
-  "See statements and documents",
+/** Money-movement permissions that carry a daily limit. */
+export const paymentTypes = moneyMovementTypes;
+export const creditCardTypes = ["Card access", "Business credit access"];
+export const merchantServiceTypes = [
+  "Chase QuickAccept",
+  "Mobile Checkout",
+  "Payment Solutions",
 ];
 export const permissionNames = [
   ...statementTypes,
-  "Chase QuickDeposit",
-  ...paymentTypes,
-  "Requires approval",
-  "Card access",
-  "Merchant services",
+  ...moneyMovementTypes,
+  ...creditCardTypes,
+  ...merchantServiceTypes,
 ];
+
+export const defaultDailyLimit = "50000.00";
 
 export type Permissions = {
   allowed: Record<string, boolean>;
   limits: Record<string, string>;
+  /** Per money-movement permission. Off unless explicitly turned on. */
+  approvals: Record<string, boolean>;
   mfa: boolean;
   token: "Soft token" | "Hard token" | "No token";
   accounts: Record<string, boolean>;
@@ -38,33 +53,57 @@ export type PermissionUser = { id: string; role: string };
 export function permissionsForRole(role: string): Omit<Permissions, "accounts"> {
   const enabled = new Set<string>();
   const allow = (...names: string[]) => names.forEach((name) => enabled.add(name));
-  const allMoney = ["Chase QuickDeposit", ...paymentTypes];
+  const achAndBills = ["ACH payments", "ACH vendor payments", "Bill pay"];
+  const movementCore = ["Transfers and payments", "Wires", "Zelle"];
+  const partnerServices = [
+    "Card access",
+    "Business credit access",
+    ...merchantServiceTypes,
+  ];
 
   switch (role) {
     case "Admin":
     case "CFO":
-      allow(...statementTypes, ...allMoney, "Card access", "Merchant services");
+      allow(
+        ...statementTypes,
+        "Chase QuickDeposit",
+        ...achAndBills,
+        "CashFlow 360",
+        ...movementCore,
+        "Payroll",
+        ...partnerServices,
+      );
       break;
     case "Business Partner":
-      allow(...statementTypes, "Card access", "Merchant services");
+      allow(...statementTypes, ...partnerServices);
       break;
     case "Finance Lead":
       allow(
         ...statementTypes,
         "Chase QuickDeposit",
-        "ACH payments",
-        "ACH vendor payments",
-        "Bill pay",
+        ...achAndBills,
         "CashFlow 360",
+        "Payroll",
       );
       break;
     case "Money Mover":
-      allow(...statementTypes, ...allMoney);
+      allow(
+        ...statementTypes,
+        "Chase QuickDeposit",
+        ...achAndBills,
+        "CashFlow 360",
+        ...movementCore,
+        "Payroll",
+      );
       break;
     case "Accountant":
       allow(...statementTypes, "Chase QuickDeposit", "CashFlow 360");
       break;
     case "Read Only":
+      allow(...statementTypes, "Card access");
+      break;
+    case "Custom":
+      break;
     default:
       allow(...statementTypes, "Card access");
       break;
@@ -74,7 +113,8 @@ export function permissionsForRole(role: string): Omit<Permissions, "accounts"> 
     allowed: Object.fromEntries(
       permissionNames.map((name) => [name, enabled.has(name)]),
     ),
-    limits: Object.fromEntries(paymentTypes.map((name) => [name, "50000.00"])),
+    limits: Object.fromEntries(moneyMovementTypes.map((name) => [name, defaultDailyLimit])),
+    approvals: Object.fromEntries(moneyMovementTypes.map((name) => [name, false])),
     mfa: true,
     token: "Soft token",
   };
@@ -82,10 +122,11 @@ export function permissionsForRole(role: string): Omit<Permissions, "accounts"> 
 
 export function seedPermissionsForUser(user: PermissionUser): Permissions {
   const base = permissionsForRole(user.role);
-  return {
-    ...base,
-    accounts: seedAccountAccess(user.id, user.role, base),
-  };
+  const accounts: Record<string, boolean> = {};
+  coffeeCompanies.forEach((_, index) => {
+    Object.assign(accounts, seedAccountAccess(user.id, user.role, base, index));
+  });
+  return { ...base, accounts };
 }
 
 export const permissionsStorageKey = (id: string) => `asm-permissions-v1-${id}`;
@@ -103,6 +144,7 @@ function isValidAccountMap(
 
 type StoredPermissionsBlob = Omit<Permissions, "accounts"> & {
   accounts: Permissions["accounts"] | boolean[];
+  approvals?: Permissions["approvals"];
 };
 
 function isValidSavedPermissions(saved: unknown): saved is StoredPermissionsBlob {
@@ -114,11 +156,12 @@ function isValidSavedPermissions(saved: unknown): saved is StoredPermissionsBlob
     permissionNames.every(
       (name) => typeof blob.allowed?.[name] === "boolean",
     ) &&
-    paymentTypes.every(
+    moneyMovementTypes.every(
       (name) =>
         typeof blob.limits?.[name] === "string" &&
         Number.isFinite(Number(blob.limits[name])) &&
-        Number(blob.limits[name]) >= 0,
+        Number(blob.limits[name]) >= 0 &&
+        typeof blob.approvals?.[name] === "boolean",
     ) &&
     (isValidAccountMap(blob.accounts) ||
       (Array.isArray(blob.accounts) &&

@@ -5,7 +5,14 @@ import {
   visibleAccountsForUser,
   type DemoCompanyAccount,
 } from "./demoAccounts";
-import { paymentTypes, statementTypes, type Permissions } from "./userPermissions";
+import {
+  creditCardTypes,
+  defaultDailyLimit,
+  merchantServiceTypes,
+  moneyMovementTypes,
+  statementTypes,
+  type Permissions,
+} from "./userPermissions";
 
 export const EditorContext = createContext<{
   editing: boolean;
@@ -17,84 +24,127 @@ export const EditorContext = createContext<{
   companyIndex: number;
 } | null>(null);
 
+function StateIcon({ on, label }: { on: boolean; label: string }) {
+  return (
+    <span
+      className={`permission-state-icon ${on ? "allowed" : "denied"}`}
+      role="img"
+      aria-label={label}
+      style={{
+        maskImage: `url(${on ? assets.imgSuccessIcoCheckmark : assets.imgActionIcoClose})`,
+      }}
+    />
+  );
+}
+
 export function PermissionItem({
   text,
   limit = false,
+  approval = false,
 }: {
   text: string;
   limit?: boolean;
+  approval?: boolean;
 }) {
   const ctx = useContext(EditorContext);
   if (!ctx) return null;
   const { editing, value, setValue } = ctx;
-  const allowed = value.allowed[text];
+  const allowed = value.allowed[text] ?? false;
+  const needsApproval = value.approvals?.[text] ?? false;
   return (
-    <li className={`permission-item ${limit ? "with-limit" : ""}`}>
-      {editing ? (
-        <input
-          type="checkbox"
-          className="permission-checkbox"
-          aria-label={text}
-          checked={allowed}
-          onChange={(event) =>
-            setValue((previous) => ({
-              ...previous,
-              allowed: { ...previous.allowed, [text]: event.target.checked },
-            }))
-          }
-        />
-      ) : (
-        <span
-          className={`permission-state-icon ${allowed ? "allowed" : "denied"}`}
-          role="img"
-          aria-label={allowed ? "Allowed" : "Not allowed"}
-          style={{
-            maskImage: `url(${allowed ? assets.imgSuccessIcoCheckmark : assets.imgActionIcoClose})`,
-          }}
-        />
-      )}
-      <span>{text}</span>
-      {limit && (
-        <>
-          <span className="daily-limit">Daily limit</span>
+    <>
+      <li className={`permission-item ${limit && allowed ? "with-limit" : ""}`}>
+        {editing ? (
+          <input
+            type="checkbox"
+            className="permission-checkbox"
+            aria-label={text}
+            checked={allowed}
+            onChange={(event) => {
+              const on = event.target.checked;
+              setValue((previous) => ({
+                ...previous,
+                allowed: { ...previous.allowed, [text]: on },
+                limits:
+                  limit && on
+                    ? { ...previous.limits, [text]: defaultDailyLimit }
+                    : previous.limits,
+                approvals:
+                  approval && on
+                    ? { ...previous.approvals, [text]: false }
+                    : previous.approvals,
+              }));
+            }}
+          />
+        ) : (
+          <StateIcon on={allowed} label={allowed ? "Allowed" : "Not allowed"} />
+        )}
+        <span>{text}</span>
+        {limit && allowed && (
+          <>
+            <span className="daily-limit">Daily limit</span>
+            {editing ? (
+              <input
+                className="limit-input"
+                type="number"
+                min="0"
+                max="999999999"
+                step="0.01"
+                inputMode="decimal"
+                required
+                aria-label={`${text} daily limit`}
+                value={value.limits[text] ?? defaultDailyLimit}
+                onChange={(event) =>
+                  setValue((previous) => ({
+                    ...previous,
+                    limits: { ...previous.limits, [text]: event.target.value },
+                  }))
+                }
+              />
+            ) : (
+              <span className="limit-value">
+                {new Intl.NumberFormat("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                }).format(Number(value.limits[text] ?? defaultDailyLimit))}
+              </span>
+            )}
+          </>
+        )}
+      </li>
+      {approval && allowed && (
+        <li className="permission-item">
           {editing ? (
             <input
-              className="limit-input"
-              type="number"
-              min="0"
-              max="999999999"
-              step="0.01"
-              inputMode="decimal"
-              required
-              aria-label={`${text} daily limit`}
-              disabled={!allowed}
-              value={value.limits[text]}
+              type="checkbox"
+              className="permission-checkbox"
+              aria-label={`${text} requires approval`}
+              checked={needsApproval}
               onChange={(event) =>
                 setValue((previous) => ({
                   ...previous,
-                  limits: { ...previous.limits, [text]: event.target.value },
+                  approvals: { ...previous.approvals, [text]: event.target.checked },
                 }))
               }
             />
           ) : (
-            <span className="limit-value">
-              {new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "USD",
-              }).format(Number(value.limits[text]))}
-            </span>
+            <StateIcon
+              on={needsApproval}
+              label={needsApproval ? `${text} requires approval` : `${text} does not require approval`}
+            />
           )}
-        </>
+          <span>Requires approval</span>
+        </li>
       )}
-    </li>
+    </>
   );
 }
 
 const categoryDescriptions: Record<string, string> = {
-  "Statements and documents": "Balances, statements, and account records",
-  "Money movement": "Payments, transfers, and daily limits",
-  "Credit cards": "Business card access",
-  "Merchant services": "Coffee shop payment processing",
+  "Account Information": "Balances, statements, and account records",
+  "Money Movement": "Payments, transfers, and daily limits",
+  "Credit Cards": "Business card access",
+  "Merchant Services": "Coffee shop payment processing",
 };
 
 export function PermissionCategory({
@@ -129,23 +179,25 @@ export function PermissionCategoriesEditor() {
     <section className="permission-details">
       <h3>User permissions</h3>
       <div className="permission-categories">
-        <PermissionCategory title="Statements and documents" icon={assets.imgIcon1}>
+        <PermissionCategory title="Account Information" icon={assets.imgIcon1}>
           {statementTypes.map((text) => (
             <PermissionItem key={text} text={text} />
           ))}
         </PermissionCategory>
-        <PermissionCategory title="Money movement" icon={assets.imgIcon2}>
-          <PermissionItem text="Chase QuickDeposit" />
-          {paymentTypes.map((text) => (
-            <PermissionItem key={text} text={text} limit />
+        <PermissionCategory title="Money Movement" icon={assets.imgIcon2}>
+          {moneyMovementTypes.map((text) => (
+            <PermissionItem key={text} text={text} limit approval />
           ))}
-          <PermissionItem text="Requires approval" />
         </PermissionCategory>
-        <PermissionCategory title="Credit cards" icon={assets.imgIcon4}>
-          <PermissionItem text="Card access" />
+        <PermissionCategory title="Credit Cards" icon={assets.imgIcon4}>
+          {creditCardTypes.map((text) => (
+            <PermissionItem key={text} text={text} />
+          ))}
         </PermissionCategory>
-        <PermissionCategory title="Merchant services" icon={assets.imgIcon4}>
-          <PermissionItem text="Merchant services" />
+        <PermissionCategory title="Merchant Services" icon={assets.imgIcon4}>
+          {merchantServiceTypes.map((text) => (
+            <PermissionItem key={text} text={text} />
+          ))}
         </PermissionCategory>
       </div>
     </section>

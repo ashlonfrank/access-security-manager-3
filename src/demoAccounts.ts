@@ -78,7 +78,7 @@ export function allCompanyAccountOptions(companyIdx: number): DemoCompanyAccount
   return accountsForCompany(companyIdx);
 }
 
-/** Role × product baseline (company catalog still limits which rows exist). */
+/** Products selected by default for a role. Account rows stay listed either way. */
 export function entitledProductsForRole(role: string): Set<AccountProduct> {
   switch (role) {
     case "Admin":
@@ -104,104 +104,69 @@ export function entitledProductsForRole(role: string): Set<AccountProduct> {
     case "Accountant":
       return new Set(["checking", "savings"]);
     case "Read Only":
-      return new Set(["checking", "savings", "credit_card"]);
+      return new Set(["checking", "credit_card"]);
+    case "Custom":
+      return new Set();
     default:
-      return new Set(["checking", "savings"]);
+      return new Set(["checking", "credit_card"]);
   }
-}
-
-export function isAccountEntitled(
-  role: string,
-  product: AccountProduct,
-  companyIdx: number,
-  permissions: Pick<Permissions, "allowed">,
-): boolean {
-  if (!accountsForCompany(companyIdx).some((row) => row.product === product)) {
-    return false;
-  }
-  if (!entitledProductsForRole(role).has(product)) return false;
-
-  if (
-    product === "credit_card" &&
-    role === "Read Only" &&
-    !permissions.allowed["Card access"]
-  ) {
-    return false;
-  }
-  if (
-    product === "merchant_services" &&
-    !permissions.allowed["Merchant services"]
-  ) {
-    return false;
-  }
-
-  return true;
 }
 
 /**
- * Accounts visible for a user in a company context (home company or P2 selection).
- * Hierarchy: company → accounts → user access flags.
+ * Every account at the company stays available to select.
+ * Role defaults choose which ones start selected; entitlements do not hide rows.
  */
 export function visibleAccountsForUser(
   userId: string,
-  role: string,
-  permissions: Pick<Permissions, "allowed">,
+  _role: string,
+  _permissions: Pick<Permissions, "allowed">,
   companyIdx: number = companyIndex(userId),
 ): DemoCompanyAccount[] {
-  return accountsForCompany(companyIdx).filter((account) =>
-    isAccountEntitled(role, account.product, companyIdx, permissions),
-  );
+  return accountsForCompany(companyIdx);
 }
 
-function defaultAccessForAccount(
+function accountSelectedByDefault(
   role: string,
   account: DemoCompanyAccount,
-  indexAmongVisible: number,
-  permissions: Pick<Permissions, "allowed">,
+  catalog: DemoCompanyAccount[],
 ): boolean {
-  switch (role) {
-    case "Admin":
-    case "CFO":
-    case "Business Partner":
-    case "Finance Lead":
-    case "Accountant":
-      return true;
-    case "Money Mover":
-      return account.product === "checking" && indexAmongVisible < 2;
-    case "Read Only":
-      if (account.product === "checking") return indexAmongVisible === 0;
-      if (account.product === "savings") return false;
-      if (account.product === "credit_card") {
-        return permissions.allowed["Card access"] === true;
-      }
-      return false;
-    default:
-      return indexAmongVisible === 0;
+  const known = new Set([
+    "Admin",
+    "CFO",
+    "Business Partner",
+    "Finance Lead",
+    "Money Mover",
+    "Accountant",
+    "Read Only",
+    "Custom",
+  ]);
+  const effective = known.has(role) ? role : "Read Only";
+  if (!entitledProductsForRole(effective).has(account.product)) return false;
+  if (effective === "Money Mover") {
+    const checking = catalog.filter((row) => row.product === "checking");
+    const index = checking.indexOf(account);
+    return index >= 0 && index < 2;
   }
+  if (effective === "Read Only") {
+    const checking = catalog.filter((row) => row.product === "checking");
+    const cards = catalog.filter((row) => row.product === "credit_card");
+    if (account.product === "checking") return account.id === checking[0]?.id;
+    if (account.product === "credit_card") return account.id === cards[0]?.id;
+    return false;
+  }
+  return true;
 }
 
 export function seedAccountAccess(
   userId: string,
   role: string,
-  permissions: Pick<Permissions, "allowed">,
+  _permissions: Pick<Permissions, "allowed">,
   companyIdx: number = companyIndex(userId),
 ): Record<string, boolean> {
-  const visible = visibleAccountsForUser(
-    userId,
-    role,
-    permissions,
-    companyIdx,
+  const catalog = accountsForCompany(companyIdx);
+  return Object.fromEntries(
+    catalog.map((account) => [account.id, accountSelectedByDefault(role, account, catalog)]),
   );
-  const access: Record<string, boolean> = {};
-  visible.forEach((account, index) => {
-    access[account.id] = defaultAccessForAccount(
-      role,
-      account,
-      index,
-      permissions,
-    );
-  });
-  return access;
 }
 
 export function migrateLegacyAccountBooleans(
