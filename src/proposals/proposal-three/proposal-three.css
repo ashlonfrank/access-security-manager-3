@@ -14,8 +14,14 @@
   background: #e7edf2;
   min-height: 100vh;
   color: #0f171f;
+  font-family: "Open Sans", sans-serif;
   font-size: 14px;
+  font-synthesis: none;
   line-height: 1.5;
+}
+
+.proposal-three :where(h1, h2, h3, h4, h5, h6, b, strong) {
+  font-weight: 600;
 }
 
 .proposal-three main.p3-main {

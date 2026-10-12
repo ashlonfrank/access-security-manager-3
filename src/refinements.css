@@ -970,7 +970,7 @@
   background: var(--interactive);
   color: white;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   flex-shrink: 0;
 }
 .approval-info-dot {
@@ -1031,7 +1031,7 @@
   border-radius: 50%;
   background: #e6a817;
   color: white;
-  font-weight: 700;
+  font-weight: 600;
   flex-shrink: 0;
 }
 .decline-summary-card {
