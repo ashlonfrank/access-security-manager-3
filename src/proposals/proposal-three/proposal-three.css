@@ -42,7 +42,8 @@
 }
 
 .p3-title-search {
-  margin-left: auto;
+  /* Row gap is 20px; this extra 12px puts the field 32px after the companies tab. */
+  margin-left: 12px;
   min-width: 220px;
   align-self: center;
 }

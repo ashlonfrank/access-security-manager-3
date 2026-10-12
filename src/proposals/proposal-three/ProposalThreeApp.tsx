@@ -45,11 +45,8 @@ function Chevron({ direction = "right" }: { direction?: "right" | "down" }) {
   );
 }
 
-function permissionsIncludeCompany(user: User, companyIdx: number): boolean {
-  const stored = readStoredPermissions(user);
-  return accountsForCompany(companyIdx).some((account) =>
-    Object.prototype.hasOwnProperty.call(stored.accounts, account.id),
-  );
+function userBelongsToCompany(user: User, companyIdx: number): boolean {
+  return companyIndex(user.id) === companyIdx;
 }
 
 function normalizeDemoUsers(users: User[]): User[] {
@@ -139,7 +136,7 @@ export default function ProposalThreeApp() {
   const companyPeople = useMemo(() => {
     if (selectedCompany === null) return [];
     return users
-      .filter((user) => user.status !== "Removed" && permissionsIncludeCompany(user, selectedCompany))
+      .filter((user) => user.status !== "Removed" && userBelongsToCompany(user, selectedCompany))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [users, selectedCompany]);
 
@@ -351,6 +348,9 @@ export default function ProposalThreeApp() {
                 <p className="p3-empty">No companies match that search.</p>
               ) : (
                 <div className="p3-group">
+                  <div className="p3-group-head">
+                    <h2>Companies</h2>
+                  </div>
                   {companyRows.map((row) => (
                     <button
                       type="button"
@@ -409,36 +409,38 @@ export default function ProposalThreeApp() {
           )}
 
           {tab === "companies" && selectedCompany !== null && (
-            <section className="p3-panel p3-panel-person p3-panel-enter" aria-label="People">
+            <section className="p3-panel p3-panel-person p3-panel-enter" aria-label="Users">
               <div className="p3-scroll">
-                <div className="p3-panel-title">
-                  <h2>People</h2>
-                  <button type="button" className="p3-close" aria-label="Close people" onClick={closeCompanyPeople} />
-                </div>
-                {companyPeople.length === 0 ? (
-                  <p className="p3-empty">No people at this company.</p>
-                ) : (
-                  companyPeople.map((user) => (
-                    <button
-                      type="button"
-                      className="p3-person"
-                      key={user.id}
-                      aria-checked={user.id === selectedUserId}
-                      onClick={() => selectUser(user)}
-                    >
-                      <Avatar user={user} />
-                      <span className="p3-person-copy">
-                        <span className="p3-person-name">{user.name}</span>
-                        <span className="p3-meta">
-                          <span className={`tag status-tag ${statusClass(user.status)}`}>{user.status}</span>
-                          {" · "}
-                          {user.role}
+                <div className="p3-group">
+                  <div className="p3-group-head">
+                    <h2>Users</h2>
+                    <button type="button" className="p3-close" aria-label="Close users" onClick={closeCompanyPeople} />
+                  </div>
+                  {companyPeople.length === 0 ? (
+                    <p className="p3-empty">No users at this company.</p>
+                  ) : (
+                    companyPeople.map((user) => (
+                      <button
+                        type="button"
+                        className="p3-person"
+                        key={user.id}
+                        aria-checked={user.id === selectedUserId}
+                        onClick={() => selectUser(user)}
+                      >
+                        <Avatar user={user} />
+                        <span className="p3-person-copy">
+                          <span className="p3-person-name">{user.name}</span>
+                          <span className="p3-meta">
+                            <span className={`tag status-tag ${statusClass(user.status)}`}>{user.status}</span>
+                            {" · "}
+                            {user.role}
+                          </span>
                         </span>
-                      </span>
-                      <span className="p3-radio" />
-                    </button>
-                  ))
-                )}
+                        <span className="p3-radio" />
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
             </section>
           )}
