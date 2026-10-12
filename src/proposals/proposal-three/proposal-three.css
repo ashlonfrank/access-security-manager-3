@@ -111,7 +111,7 @@
   flex-direction: column;
   width: auto;
   flex: 1 1 0;
-  min-width: 260px;
+  min-width: 0;
   overflow: visible;
   background: #e2e8f0;
   padding: 8px;
@@ -125,16 +125,11 @@
   background: #e2e8f0;
 }
 
-.p3-panel-person {
+.p3-panel-person,
+.p3-panel-rights {
   flex: 1 1 0;
   width: auto;
-  min-width: 240px;
-}
-
-.p3-panel-rights {
-  flex: 1.35 1 0;
-  width: auto;
-  min-width: 320px;
+  min-width: 0;
 }
 
 .p3-email {
@@ -818,8 +813,7 @@
   right: auto;
   bottom: auto;
   width: auto;
-  flex: 1.35 1 0;
-  min-width: 320px;
+  flex: 1 1 0;
   height: auto;
   max-height: min(760px, calc(100vh - 180px));
   z-index: 1;
