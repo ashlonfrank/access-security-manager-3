@@ -1,6 +1,5 @@
 export const businessRoles = [
   "Admin",
-  "CFO",
   "Business Partner",
   "Finance Lead",
   "Money Mover",
@@ -10,8 +9,7 @@ export const businessRoles = [
 ];
 export const roleDescriptions: Record<string, string> = {
   Admin: "Full access to manage business accounts, payments, and users.",
-  CFO: "Full access to financial accounts, payments, and reporting.",
-  "Business Partner": "Can access business accounts, cards, and payment processing services.",
+  "Business Partner": "Can manage business accounts, payments, cards, and merchant services.",
   "Finance Lead": "Can manage day-to-day finances, payments, and payroll.",
   "Money Mover": "Can make payments and transfers from authorized accounts.",
   Accountant: "Can view financial information, deposit checks, and manage cash flow.",
@@ -21,7 +19,7 @@ export const roleDescriptions: Record<string, string> = {
 export function normalizeRole(role: string) {
   if (businessRoles.includes(role)) return role;
   const previousRoles: Record<string, string> = {
-    Owner: "Admin", "Business partner": "Business Partner", "Co-owner": "Admin", "Co-Owner": "Admin",
+    Owner: "Admin", CFO: "Admin", "Business partner": "Business Partner", "Co-owner": "Admin", "Co-Owner": "Admin",
     "Finance Manager": "Finance Lead", "Finance manager": "Finance Lead", "Finance lead": "Finance Lead",
     "Operations manager": "Finance Lead", Bookkeeper: "Finance Lead", "Store manager": "Money Mover",
     "Assistant store manager": "Money Mover", "Shift supervisor": "Money Mover",

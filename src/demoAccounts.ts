@@ -82,7 +82,6 @@ export function allCompanyAccountOptions(companyIdx: number): DemoCompanyAccount
 export function entitledProductsForRole(role: string): Set<AccountProduct> {
   switch (role) {
     case "Admin":
-    case "CFO":
       return new Set([
         "checking",
         "savings",
@@ -132,7 +131,6 @@ function accountSelectedByDefault(
 ): boolean {
   const known = new Set([
     "Admin",
-    "CFO",
     "Business Partner",
     "Finance Lead",
     "Money Mover",

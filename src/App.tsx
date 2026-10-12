@@ -21,6 +21,7 @@ import companyAssets from "./company-assets.json";
 import initialUsers from "./users.json";
 import legacyRoles from "./legacy-user-roles.json";
 import { businessRoles, statusClass, normalizeRole, isInactive } from "./business";
+import { permissionsStorageKey } from "./userPermissions";
 
 export type User = {
   id: string;
@@ -615,7 +616,7 @@ export default function App() {
                     setUsers((prev) =>
                       prev.filter((u) => u.id !== dialog.user.id),
                     );
-                    localStorage.removeItem(`asm-permissions-v1-${dialog.user.id}`);
+                    localStorage.removeItem(permissionsStorageKey(dialog.user.id));
                     setSelectedId(null);
                     setDialog(null);
                     setNotice(`${dialog.user.name} deleted.`);
@@ -657,7 +658,7 @@ export default function App() {
                       prev.filter((u) => u.id !== dialog.user.id),
                     );
                     localStorage.removeItem(
-                      `asm-permissions-v1-${dialog.user.id}`,
+                      permissionsStorageKey(dialog.user.id),
                     );
                     if (reviewId === dialog.user.id) setReviewId(null);
                     setDialog(null);

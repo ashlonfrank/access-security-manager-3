@@ -30,7 +30,7 @@ import type { User } from "../../App";
 import "./proposal-three.css";
 
 const storageKey = "asm-demo-users-v1";
-const adminRoles = new Set(["Admin", "Business Partner", "CFO"]);
+const adminRoles = new Set(["Admin", "Business Partner"]);
 
 function Icon({ src, inverse = false }: { src: string; inverse?: boolean }) {
   return inverse ? (

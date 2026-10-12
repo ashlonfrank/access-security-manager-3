@@ -61,7 +61,6 @@ export function permissionsForRole(role: string): Omit<Permissions, "accounts"> 
 
   switch (role) {
     case "Admin":
-    case "CFO":
       allow(
         ...statementTypes,
         "Chase QuickDeposit",
@@ -73,7 +72,15 @@ export function permissionsForRole(role: string): Omit<Permissions, "accounts"> 
       );
       break;
     case "Business Partner":
-      allow(...statementTypes, ...partnerServices);
+      allow(
+        ...statementTypes,
+        "Chase QuickDeposit",
+        ...achAndBills,
+        "CashFlow 360",
+        ...movementCore,
+        "Payroll",
+        ...partnerServices,
+      );
       break;
     case "Finance Lead":
       allow(
@@ -126,7 +133,7 @@ export function seedPermissionsForUser(user: PermissionUser): Permissions {
   return { ...base, accounts };
 }
 
-export const permissionsStorageKey = (id: string) => `asm-permissions-v1-${id}`;
+export const permissionsStorageKey = (id: string) => `asm-permissions-v2-${id}`;
 
 function isValidAccountMap(
   accounts: unknown,
